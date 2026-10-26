@@ -1,5 +1,5 @@
 import type { LaunchpadBackend } from './types'
-import { createStubBackend } from './stubBackend'
+import { createLiveBackend } from './liveBackend'
 
 export * from './types'
 
@@ -16,7 +16,7 @@ export function getBackend(): Promise<LaunchpadBackend> {
     if (import.meta.env.DEV && import.meta.env.VITE_CONDOM_DEV_MOCKS === '1') {
       backendPromise = import('../../dev/mockBackend').then((m) => m.createMockBackend())
     } else {
-      backendPromise = Promise.resolve(createStubBackend())
+      backendPromise = Promise.resolve(createLiveBackend())
     }
   }
   return backendPromise

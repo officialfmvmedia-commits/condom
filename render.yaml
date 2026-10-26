@@ -1,0 +1,32 @@
+# Render Blueprint for the CONDOM API (ticker registry + IPFS upload).
+# The existing static site (thecondom.fun) stays as-is; only add VITE_API_URL / VITE_RPC_URL to it.
+databases:
+  - name: condom-db
+    databaseName: condom
+    user: condom
+    plan: basic-256mb
+    ipAllowList: [] # internal connections only
+
+services:
+  - type: web
+    name: condom-api
+    runtime: node
+    rootDir: server
+    plan: starter
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: false
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: condom-db
+          property: connectionString
+      - key: RPC_URL # mainnet RPC used to verify create txs (Helius etc. recommended)
+        sync: false
+      - key: PINATA_JWT # Pinata JWT with pinFileToIPFS / files:write
+        sync: false
+      - key: ALLOWED_ORIGINS # optional extra CORS origins, comma separated
+        sync: false

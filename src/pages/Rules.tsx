@@ -7,6 +7,7 @@ const THREE = [
   { k: 'No more block zeros.', v: 'The dev never buys block zero.' },
   { k: `Max 1% / ${RULES.MAX_DEV_BUY_SOL} SOL dev buy.`, v: "Over the cap, the launch won't go." },
   { k: "Dev can't bundle block zero.", v: 'No bundle tools. None.' },
+  { k: 'No vamps. One ticker, one coin.', v: 'Once a ticker is born here, copycats (even lookalike spellings) are blocked.' },
 ]
 
 export function Rules() {
@@ -14,7 +15,7 @@ export function Rules() {
     <section className="container section rules">
       <div className="page-head rise">
         <ProtectedBadge size="sm" label="The rules" />
-        <h1>Three rules.</h1>
+        <h1>Four rules.</h1>
       </div>
 
       <ol className="three">

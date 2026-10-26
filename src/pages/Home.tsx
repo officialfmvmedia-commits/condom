@@ -12,6 +12,7 @@ const CLAIMS = [
   { k: 'No block 0', v: 'The dev never buys block zero' },
   { k: 'Max 1%', v: `${RULES.MAX_DEV_BUY_SOL} SOL dev buy cap` },
   { k: 'No bundles', v: "Dev can't bundle block zero" },
+  { k: 'No vamps', v: 'One ticker, one coin' },
 ]
 
 const SORTS: { id: TokenSort; label: string }[] = [
@@ -35,6 +36,7 @@ export function Home() {
           <ul className="hero-claims rise" style={{ animationDelay: '220ms' }}>
             <li><Icon kind="check" size={20} />Max 1% / {RULES.MAX_DEV_BUY_SOL} SOL dev buy</li>
             <li><Icon kind="check" size={20} />Dev can't bundle block zero</li>
+            <li><Icon kind="check" size={20} />No vamps. One ticker, one coin.</li>
           </ul>
           <div className="hero-ctas rise" style={{ animationDelay: '320ms' }}>
             <Link to="/launch" className="btn btn-green btn-lg">Launch a coin</Link>
@@ -101,6 +103,7 @@ export function Home() {
             <div className="ct-row"><span>Dev buy in block 0</span><span className="dim">Allowed</span><span>Never</span></div>
             <div className="ct-row"><span>Dev buy size</span><span className="dim">Unlimited</span><span>Max {RULES.MAX_DEV_BUY_SOL} SOL (≈1%)</span></div>
             <div className="ct-row"><span>Bundle tools</span><span className="dim">Everywhere</span><span>None</span></div>
+            <div className="ct-row"><span>Copycat tickers</span><span className="dim">Allowed</span><span>Blocked</span></div>
           </div>
         </Reveal>
       </section>

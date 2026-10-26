@@ -13,19 +13,26 @@
     "shots": "node scripts/screenshots.mjs",
     "report": "tsx analyzer/src/cli.ts",
     "report:serve": "tsx analyzer/src/server.ts",
-    "typecheck:analyzer": "tsc -p analyzer/tsconfig.json"
+    "typecheck:analyzer": "tsc -p analyzer/tsconfig.json",
+    "test": "vitest run",
+    "simulate": "bash scripts/simulate.sh",
+    "test:server": "npm --prefix server test"
   },
   "dependencies": {
+    "@pump-fun/pump-sdk": "^4.3.1",
+    "@solana/spl-token": "^0.4.15",
     "@solana/wallet-adapter-base": "^0.9.28",
     "@solana/wallet-adapter-phantom": "^0.9.30",
     "@solana/wallet-adapter-react": "^0.15.40",
     "@solana/wallet-adapter-solflare": "^0.6.34",
     "@solana/web3.js": "^1.98.4",
+    "bn.js": "^5.2.5",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
+    "@types/bn.js": "^5.2.0",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -35,6 +42,7 @@
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "vite": "^8.3.4",
-    "vite-plugin-node-polyfills": "^0.28.0"
+    "vite-plugin-node-polyfills": "^0.28.0",
+    "vitest": "^4.1.12"
   }
 }

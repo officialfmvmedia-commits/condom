@@ -40,6 +40,8 @@ export interface LaunchResult {
   signature: string
   /** Slot the create transaction landed in ("block 0"). The dev buy unlocks after it. */
   slot: number
+  /** Set when the coin is live on-chain but the ticker registry could not be updated. */
+  registryWarning?: string
 }
 
 export interface DevBuyParams {
@@ -97,7 +99,12 @@ export interface Page<T> {
 export interface WalletSigner {
   publicKey: { toBase58(): string }
   signTransaction<T>(tx: T): Promise<T>
+  /** Used once per launch to prove wallet ownership when reserving the ticker. */
+  signMessage?(message: Uint8Array): Promise<Uint8Array>
 }
+
+/** Progress callback for multi-step writes (shown under the Launch button). */
+export type StepFn = (step: string) => void
 
 export type BackendStatus = 'live' | 'not-connected'
 
@@ -109,9 +116,9 @@ export interface LaunchpadBackend {
   readonly id: string
   readonly status: BackendStatus
   /** Creates the coin. The create transaction contains no buy. */
-  launch(params: LaunchParams, signer: WalletSigner): Promise<LaunchResult>
+  launch(params: LaunchParams, signer: WalletSigner, onStep?: StepFn): Promise<LaunchResult>
   /** The dev's one capped buy. Rejected unless current slot >= creationSlot + RULES.DEV_BUY_MIN_SLOTS_AFTER_CREATE. */
-  devBuy(params: DevBuyParams, signer: WalletSigner): Promise<TradeResult>
+  devBuy(params: DevBuyParams, signer: WalletSigner, onStep?: StepFn): Promise<TradeResult>
   buy(params: TradeParams, signer: WalletSigner): Promise<TradeResult>
   sell(params: TradeParams, signer: WalletSigner): Promise<TradeResult>
   listTokens(query: ListTokensQuery): Promise<Page<TokenSummary>>

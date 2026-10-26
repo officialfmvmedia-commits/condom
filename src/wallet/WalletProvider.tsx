@@ -3,12 +3,11 @@ import { ConnectionProvider, WalletProvider as AdapterWalletProvider } from '@so
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom'
 import { SolflareWalletAdapter } from '@solana/wallet-adapter-solflare'
 import { WalletModalProvider } from './WalletModal'
-
-const DEFAULT_RPC = 'https://api.mainnet-beta.solana.com'
+import { RPC_URL } from '../lib/config'
 
 /** Phantom + Solflare adapters; Backpack (and any other Wallet Standard wallet) is detected automatically. */
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const endpoint = import.meta.env.VITE_SOLANA_RPC || DEFAULT_RPC
+  const endpoint = RPC_URL
   const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], [])
   return (
     <ConnectionProvider endpoint={endpoint}>

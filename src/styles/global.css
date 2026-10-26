@@ -153,7 +153,8 @@ main { flex: 1; }
 @keyframes float { 50% { transform: translateY(-10px) rotate(-.6deg); } }
 @keyframes wobble { 50% { transform: rotate(-4deg) scale(1.03); } }
 
-.rules-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.rules-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+@media (max-width: 1000px) { .rules-strip { grid-template-columns: repeat(2, 1fr); } }
 .rule-tile { padding: 22px; transition: transform .35s var(--bounce), box-shadow .3s; }
 .rule-tile:hover { transform: translateY(-3px); box-shadow: var(--shadow-hi); }
 .rule-k { font-family: var(--display); font-weight: 900; font-size: 30px; color: var(--green); line-height: 1.1; }
@@ -485,3 +486,16 @@ a.token-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hi); 
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
   .reveal { opacity: 1; transform: none; }
 }
+
+/* ticker registry + slippage */
+.ticker-hint { display: block; margin-top: 6px; font-size: 13px; font-weight: 800; }
+.ticker-hint.ok { color: var(--green); }
+.ticker-hint.bad { color: #a3202a; }
+.ticker-hint.bad a { color: inherit; text-decoration: underline; }
+.slippage { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; font-weight: 800; }
+.slippage .chip { flex: 0 0 auto; padding: 6px 12px; }
+.slippage .chip.on { background: var(--green); color: #fff; }
+.slippage-custom { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; }
+.slippage-custom input { width: 4.5ch; padding: 6px 8px; border-radius: 10px; border: 1.5px solid #e2e8e4; text-align: right; font-weight: 800; }
+.slippage-custom input[aria-invalid="true"] { border-color: var(--flag); }
+.notice.launched a { color: inherit; text-decoration: underline; }

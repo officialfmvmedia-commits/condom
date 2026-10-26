@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { Link } from 'react-router-dom'
 import { useWalletModal } from '../wallet/WalletModal'
 import { TokenCard } from '../components/TokenCard'
 import { Icon } from '../components/Brand'
@@ -8,6 +9,10 @@ import { supplyPctForFirstBuy } from '../lib/curve'
 import { useBackend } from '../lib/useBackend'
 import { NotImplementedError, type LaunchParams, type LaunchResult, type WalletSigner } from '../lib/launchpad/types'
 import { useSlotGate } from '../lib/useSlotGate'
+import { checkTicker, type TickerStatus } from '../lib/registry'
+
+type TickerCheck = { state: 'idle' | 'checking' | 'error' } | { state: 'done'; status: TickerStatus }
+const SLIPPAGE_PRESETS = [1, 5, 10]
 
 type Notice = { tone: 'info' | 'error'; text: string } | null
 
@@ -27,11 +32,31 @@ export function Launch() {
   const [notice, setNotice] = useState<Notice>(null)
   const [drag, setDrag] = useState(false)
   const [launched, setLaunched] = useState<LaunchResult | null>(null)
-  const [devBought, setDevBought] = useState(false)
+  const [devBought, setDevBought] = useState<string | null>(null)
+  const [step, setStepText] = useState<string | null>(null)
+  const [slippageText, setSlippageText] = useState('5')
+  const [tickerCheck, setTickerCheck] = useState<TickerCheck>({ state: 'idle' })
+  const creatorKey = wallet.publicKey?.toBase58()
   const gate = useSlotGate(launched?.slot ?? null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => () => { if (imageUrl) URL.revokeObjectURL(imageUrl) }, [imageUrl])
+
+  // Live NO VAMPS check against the ticker registry.
+  useEffect(() => {
+    if (launched) return
+    const t = symbol.trim()
+    if (!t) return setTickerCheck({ state: 'idle' })
+    setTickerCheck({ state: 'checking' })
+    const ctl = new AbortController()
+    const id = setTimeout(() => {
+      checkTicker(t, creatorKey, ctl.signal)
+        .then((status) => setTickerCheck({ state: 'done', status }))
+        .catch(() => { if (!ctl.signal.aborted) setTickerCheck({ state: 'error' }) })
+    }, 300)
+    return () => { ctl.abort(); clearTimeout(id) }
+  }, [symbol, creatorKey, launched])
+  const tickerTaken = tickerCheck.state === 'done' && !tickerCheck.status.available
 
   const parsed = parseFloat(devBuyText)
   const devBuy = Number.isFinite(parsed) && parsed > 0 ? parsed : 0
@@ -39,6 +64,8 @@ export function Launch() {
   const pct = supplyPctForFirstBuy(devBuy)
   const fill = Math.min(100, (devBuy / RULES.MAX_DEV_BUY_SOL) * 100)
   const ready = name.trim().length > 0 && symbol.trim().length > 0
+  const slippage = parseFloat(slippageText)
+  const slippageBad = !Number.isFinite(slippage) || slippage < 0.1 || slippage > 50
 
   const onFile = (f: File | undefined) => {
     if (!f) return
@@ -61,34 +88,41 @@ export function Launch() {
     setNotice(null)
     if (overCap) return
     if (!ready) return setNotice({ tone: 'error', text: 'Give your coin a name and a ticker.' })
+    if (!image) return setNotice({ tone: 'error', text: 'Add an image for your coin.' })
+    if (tickerTaken) return
     if (!wallet.publicKey || !wallet.signTransaction) return open()
     if (!backend) return
     const params: LaunchParams = { name: name.trim(), symbol: symbol.trim(), description: description.trim(), image, socials, devBuySol: devBuy }
     setBusy(true)
     try {
-      setLaunched(await backend.launch(params, wallet as unknown as WalletSigner))
+      const res = await backend.launch(params, wallet as unknown as WalletSigner, setStepText)
+      setLaunched(res)
+      if (res.registryWarning) setNotice({ tone: 'error', text: res.registryWarning })
     } catch (e) {
       setNotice(e instanceof NotImplementedError
         ? { tone: 'info', text: "Launches aren't live yet. Nothing was signed or sent." }
         : { tone: 'error', text: e instanceof Error ? e.message : 'Launch failed.' })
     } finally {
       setBusy(false)
+      setStepText(null)
     }
   }
 
   const devBuyNow = async () => {
-    if (!backend || !launched || !gate.unlocked || devBuy <= 0 || overCap) return
+    if (!backend || !launched || !gate.unlocked || devBuy <= 0 || overCap || slippageBad) return
     setBusy(true)
+    setNotice(null)
     try {
-      await backend.devBuy({ mint: launched.mint, sol: devBuy, creationSlot: launched.slot, slippageBps: 500 }, wallet as unknown as WalletSigner)
-      setDevBought(true)
+      const r = await backend.devBuy({ mint: launched.mint, sol: devBuy, creationSlot: launched.slot, slippageBps: Math.round(slippage * 100) }, wallet as unknown as WalletSigner, setStepText)
+      setDevBought(r.signature)
     } catch (e) {
       setNotice({ tone: e instanceof NotImplementedError ? 'info' : 'error', text: e instanceof Error ? e.message : 'Dev buy failed.' })
     } finally {
       setBusy(false)
+      setStepText(null)
     }
   }
-  const step = !launched ? 1 : !gate.unlocked ? 2 : 3
+  const phase = !launched ? 1 : !gate.unlocked ? 2 : 3
 
   return (
     <section className="container section launch">
@@ -118,8 +152,9 @@ export function Launch() {
                 </Field>
                 <Field label="Ticker" count={`${symbol.length}/${LIMITS.TICKER_MAX}`}>
                   <div className="prefix-input"><span>$</span>
-                    <input value={symbol} maxLength={LIMITS.TICKER_MAX} onChange={(e) => setSymbol(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} placeholder="BETTER" className="mono" />
+                    <input value={symbol} maxLength={LIMITS.TICKER_MAX} onChange={(e) => setSymbol(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} placeholder="BETTER" className="mono" aria-invalid={tickerTaken} aria-describedby="ticker-hint" disabled={!!launched} />
                   </div>
+                  {!launched && <TickerHint check={tickerCheck} />}
                 </Field>
               </div>
             </div>
@@ -151,7 +186,7 @@ export function Launch() {
                   aria-label="Dev buy in SOL"
                   aria-invalid={overCap}
                   aria-describedby="devbuy-hint"
-                  disabled={devBought}
+                  disabled={!!devBought}
                 />
                 <span>SOL</span>
               </div>
@@ -164,24 +199,44 @@ export function Launch() {
               <input
                 type="range" min={0} max={RULES.MAX_DEV_BUY_SOL} step={RULES.DEV_BUY_STEP_SOL}
                 value={Math.min(devBuy, RULES.MAX_DEV_BUY_SOL)} onChange={(e) => setDevBuyText(e.target.value)}
-                aria-label="Dev buy slider" disabled={devBought}
+                aria-label="Dev buy slider" disabled={!!devBought}
               />
               <div className="slider-ticks mono dim"><span>0</span><span>0.1</span><span>0.2</span><span className="green-text">0.3 max</span></div>
             </div>
             {overCap
               ? <p id="devbuy-hint" className="field-error" role="alert"><Icon kind="warn" size={18} />Max dev buy is {RULES.MAX_DEV_BUY_SOL} SOL (≈1%). Lower it to launch.</p>
-              : <p id="devbuy-hint" className="fine dim">Goes in after block zero{launched && step === 2 && gate.slotsLeft != null ? ` · unlocks in ~${((gate.slotsLeft * RULES.APPROX_SLOT_MS) / 1000).toFixed(1)}s` : '.'}</p>}
+              : <p id="devbuy-hint" className="fine dim">Goes in after block zero{launched && phase === 2 && gate.slotsLeft != null ? ` · unlocks in ~${((gate.slotsLeft * RULES.APPROX_SLOT_MS) / 1000).toFixed(1)}s` : '.'}</p>}
+            {devBuy > 0 && !overCap && (
+              <div className="slippage">
+                <span className="dim">Slippage</span>
+                {SLIPPAGE_PRESETS.map((v) => (
+                  <button key={v} type="button" className={`chip ${slippage === v ? 'on' : ''}`} onClick={() => setSlippageText(String(v))} disabled={!!devBought}>{v}%</button>
+                ))}
+                <span className="slippage-custom">
+                  <input className="mono" type="text" inputMode="decimal" aria-label="Slippage percent" aria-invalid={slippageBad} value={slippageText} disabled={!!devBought}
+                    onChange={(e) => setSlippageText(e.target.value.replace(/[^0-9.]/g, '').slice(0, 5))} />%
+                </span>
+              </div>
+            )}
+            {slippageBad && devBuy > 0 && !overCap && <p className="field-error" role="alert"><Icon kind="warn" size={18} />Slippage must be between 0.1% and 50%.</p>}
             {launched && devBuy > 0 && (
-              <button type="button" className="btn btn-green btn-block devbuy-go" disabled={!gate.unlocked || busy || overCap || devBought} onClick={devBuyNow}>
-                {devBought ? 'Dev buy sent' : gate.unlocked ? `Buy ${devBuy} SOL` : 'Waiting for block zero to pass…'}
+              <button type="button" className="btn btn-green btn-block devbuy-go" disabled={!gate.unlocked || busy || overCap || slippageBad || !!devBought} onClick={devBuyNow}>
+                {devBought ? 'Dev buy confirmed' : busy && launched ? (step ?? 'Working…') : gate.unlocked ? `Buy ${devBuy} SOL` : 'Waiting for block zero to pass…'}
               </button>
             )}
+            {devBought && <p className="fine"><a href={`https://solscan.io/tx/${devBought}`} target="_blank" rel="noreferrer">View dev buy on Solscan ↗</a></p>}
           </div>
 
+          {launched && (
+            <div className="notice info launched" role="status">
+              <Icon kind="info" size={18} />
+              <span>Coin is live. <a href={`https://pump.fun/coin/${launched.mint}`} target="_blank" rel="noreferrer">pump.fun ↗</a> · <a href={`https://solscan.io/tx/${launched.signature}`} target="_blank" rel="noreferrer">create tx ↗</a> · <span className="mono">{launched.mint.slice(0, 4)}…{launched.mint.slice(-4)}</span></span>
+            </div>
+          )}
           {notice && <div className={`notice ${notice.tone}`} role="status"><Icon kind={notice.tone === 'error' ? 'warn' : 'info'} size={18} />{notice.text}</div>}
 
-          <button className="btn btn-green btn-lg btn-block rise" style={{ animationDelay: '180ms' }} type="submit" disabled={busy || !!launched || overCap}>
-            {overCap ? `Dev buy over ${RULES.MAX_DEV_BUY_SOL} SOL` : busy && !launched ? 'Preparing…' : launched ? 'Coin created' : wallet.publicKey ? 'Launch' : 'Connect wallet to launch'}
+          <button className="btn btn-green btn-lg btn-block rise" style={{ animationDelay: '180ms' }} type="submit" disabled={busy || !!launched || overCap || tickerTaken}>
+            {overCap ? `Dev buy over ${RULES.MAX_DEV_BUY_SOL} SOL` : tickerTaken ? 'Ticker taken' : busy && !launched ? (step ?? 'Preparing…') : launched ? 'Coin created' : wallet.publicKey ? 'Launch' : 'Connect wallet to launch'}
           </button>
         </form>
 
@@ -195,6 +250,7 @@ export function Launch() {
               <li><Check /><b>No dev buy in block zero</b></li>
               <li><Check /><b>Max 1% / {RULES.MAX_DEV_BUY_SOL} SOL dev buy</b></li>
               <li><Check /><b>No bundle tools</b></li>
+              <li><Check /><b>No vamps. One ticker, one coin.</b></li>
             </ul>
           </div>
         </aside>
@@ -210,6 +266,18 @@ function Field({ label, count, children }: { label: string; count?: string; chil
       {children}
     </label>
   )
+}
+
+function TickerHint({ check }: { check: TickerCheck }) {
+  if (check.state === 'idle') return null
+  if (check.state === 'checking') return <span id="ticker-hint" className="ticker-hint dim">Checking…</span>
+  if (check.state !== 'done') return <span id="ticker-hint" className="ticker-hint dim">Couldn't check the ticker right now.</span>
+  const s = check.status
+  if (s.status === 'live') {
+    return <span id="ticker-hint" className="ticker-hint bad" role="alert">Taken by <Link to={`/token/${s.coin.mint}`}>{s.coin.name}</Link>. No vamps.</span>
+  }
+  if (s.status === 'reserved' && !s.available) return <span id="ticker-hint" className="ticker-hint bad" role="alert">Reserved by another dev right now.</span>
+  return <span id="ticker-hint" className="ticker-hint ok">Available</span>
 }
 
 const Check = () => <span className="li-ico ok">✓</span>
