@@ -4,7 +4,7 @@ import {
 } from '@solana/web3.js'
 import {
   assertCleanCreate, assertCleanDevBuy, assertDevBuyAllowed, assertDevBuyAmount, devBuyLamports, devBuyUnlockSlot,
-  MAX_DEV_BUY_LAMPORTS,
+  MAX_DEV_BUY_LAMPORTS, LIGHTHOUSE,
 } from './launchTxBuilder'
 
 const PUMP = new PublicKey('6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P')
@@ -72,6 +72,11 @@ describe('assertCleanCreate', () => {
   const dev = Keypair.generate().publicKey, mint = Keypair.generate().publicKey
   it('accepts create only', () => {
     expect(() => assertCleanCreate(tx(dev, [cu, createIx(dev, mint)]), dev, mint)).not.toThrow()
+  })
+  it("accepts Phantom's Lighthouse guard instruction", () => {
+    const lh = new TransactionInstruction({ programId: new PublicKey(LIGHTHOUSE), keys: [], data: Buffer.from([1, 2, 3]) })
+    expect(() => assertCleanCreate(tx(dev, [cu, createIx(dev, mint), lh]), dev, mint)).not.toThrow()
+    expect(() => assertCleanDevBuy(tx(dev, [cu, buyIx(dev, 1n), lh]), dev)).not.toThrow()
   })
   it('rejects a create with a buy (block-zero bundle) or a tip', () => {
     expect(() => assertCleanCreate(tx(dev, [createIx(dev, mint), buyIx(dev, 1n)]), dev, mint)).toThrow(/disallowed/)

@@ -32,6 +32,8 @@ export const DEFAULT_PRIORITY_MICRO_LAMPORTS = 200_000
 const COMPUTE_BUDGET = ComputeBudgetProgram.programId.toBase58()
 const PUMP = PUMP_PROGRAM_ID.toBase58()
 const SYSTEM = '11111111111111111111111111111111'
+/** Lighthouse: assertion-only guard program Phantom injects into signed txs. It can only make a tx fail, never move funds. */
+export const LIGHTHOUSE = 'L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95'
 const DISC = {
   create_v2: [214, 144, 76, 236, 95, 139, 49, 180],
   buy_exact_quote_in_v3: [225, 247, 80, 30, 213, 179, 132, 136],
@@ -90,7 +92,7 @@ export function assertCleanCreate(tx: VersionedTransaction, creator: PublicKey, 
   let creates = 0
   for (const ix of tx.message.compiledInstructions) {
     const prog = keys[ix.programIdIndex]
-    if (prog === COMPUTE_BUDGET) continue
+    if (prog === COMPUTE_BUDGET || prog === LIGHTHOUSE) continue
     if (prog === PUMP && hasDisc(ix.data, DISC.create_v2)) { creates++; continue }
     throw new Error(`Create tx contains a disallowed instruction (${prog}). No buys, no tips, no transfers.`)
   }
@@ -106,7 +108,7 @@ export function assertCleanDevBuy(tx: VersionedTransaction, creator: PublicKey):
   let buys = 0
   for (const ix of tx.message.compiledInstructions) {
     const prog = keys[ix.programIdIndex]
-    if (prog === COMPUTE_BUDGET || prog === ASSOCIATED_TOKEN_PROGRAM_ID.toBase58()) continue
+    if (prog === COMPUTE_BUDGET || prog === LIGHTHOUSE || prog === ASSOCIATED_TOKEN_PROGRAM_ID.toBase58()) continue
     if (prog === PUMP && hasDisc(ix.data, DISC.buy_exact_quote_in_v3)) {
       // args: spendable_quote_in u64 @8, min_tokens_out u64 @16
       const quoteIn = readU64LE(ix.data, 8)
