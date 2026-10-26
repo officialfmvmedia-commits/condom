@@ -8,6 +8,7 @@ import {
 import { displayTicker, normalizeTicker, TickerError } from './normalize'
 import { isPubkey, verifyCreateTx, verifyReserveSignature, VerifyError, type FetchTx } from './verify'
 import { pinataUploadMetadata, UploadError } from './ipfs'
+import { rpcProxyHandler, RPC_MAX_BODY_BYTES } from './rpcProxy'
 
 export const RESERVATION_MINUTES = 10
 
@@ -25,17 +26,23 @@ export interface AppDeps {
   allowedOrigins?: string[]
   /** requests per minute per IP for general endpoints */
   rateLimitPerMinute?: number
+  /** Upstream JSON-RPC (server-side only, may contain an API key). Enables POST /rpc. */
+  rpcUpstream?: string
+  /** requests per minute per IP for /rpc (a launch polls ~2/s for a minute) */
+  rpcRateLimitPerMinute?: number
+  rpcFetch?: typeof fetch
 }
 
 // ----------------------------------------------------------------- rate limit
 
-function rateLimiter(limit: number, windowMs: number) {
+function rateLimiter(limit: number, windowMs: number, skip?: (c: Context) => boolean) {
   const hits = new Map<string, { n: number; reset: number }>()
   setInterval(() => {
     const now = Date.now()
     for (const [k, v] of hits) if (v.reset < now) hits.delete(k)
   }, windowMs).unref?.()
   return async (c: Context, next: () => Promise<void>) => {
+    if (skip?.(c)) return next()
     const ip = (c.req.header('x-forwarded-for') ?? '').split(',')[0].trim() || c.req.header('x-real-ip') || 'local'
     const now = Date.now()
     let h = hits.get(ip)
@@ -131,11 +138,13 @@ export function createApp(deps: AppDeps) {
     cors({
       origin: (o) => (origins.includes(o) || isLocalOrigin(o) ? o : null),
       allowMethods: ['GET', 'POST', 'OPTIONS'],
-      allowHeaders: ['content-type'],
+      // web3.js Connection sends a solana-client header on every RPC call
+      allowHeaders: ['content-type', 'solana-client'],
       maxAge: 600,
     }),
   )
-  app.use('*', rateLimiter(deps.rateLimitPerMinute ?? 120, 60_000))
+  app.use('*', rateLimiter(deps.rateLimitPerMinute ?? 120, 60_000, (c) => c.req.path === '/rpc'))
+  app.use('/rpc', rateLimiter(deps.rpcRateLimitPerMinute ?? 600, 60_000))
   app.use('/tickers/reserve', rateLimiter(20, 60_000))
   app.use('/tickers/confirm', rateLimiter(20, 60_000))
   app.use('/ipfs', rateLimiter(10, 10 * 60_000))
@@ -148,6 +157,22 @@ export function createApp(deps: AppDeps) {
     console.error(err)
     return c.json({ error: 'Server error. Try again.' }, 500)
   })
+
+  // JSON-RPC proxy: browsers on allowed origins only (CORS + Origin check), method allowlist,
+  // size/batch caps, per-IP rate limit. Upstream URL never leaves the server.
+  if (deps.rpcUpstream) {
+    const upstream = deps.rpcUpstream
+    const handler = rpcProxyHandler(upstream, deps.rpcFetch)
+    app.post(
+      '/rpc',
+      bodyLimit({ maxSize: RPC_MAX_BODY_BYTES, onError: (c) => c.json({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'Request too large.' } }, 413) }),
+      async (c) => {
+        const o = c.req.header('origin') ?? ''
+        if (!(origins.includes(o) || isLocalOrigin(o))) return c.json({ jsonrpc: '2.0', id: null, error: { code: -32000, message: 'Origin not allowed.' } }, 403)
+        return handler(c)
+      },
+    )
+  }
 
   app.get('/', (c) => c.json({ ok: true, service: 'condom-registry' }))
   app.get('/health', async (c) => {

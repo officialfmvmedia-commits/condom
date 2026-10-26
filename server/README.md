@@ -9,6 +9,7 @@ Ticker registry (NO VAMPS) + IPFS metadata upload. Hono on Node 20, Postgres.
 | `POST /tickers/confirm` `{ticker, mint, signature, creator}` | verifies the pump.fun create tx via RPC, marks live |
 | `GET /coins`, `GET /coins/:mint` | live CONDOM coins |
 | `POST /ipfs` multipart `file,name,symbol,description,twitter,telegram,website` | Pinata upload, returns `{metadataUri, imageUri}` |
+| `POST /rpc` | Solana JSON-RPC proxy to `RPC_URL` (keeps the key server-side). Allowed origins only, method allowlist (see `src/rpcProxy.ts`), 64 KB body, batch ≤ 10, 600 req/min/IP. No websockets (frontend polls `getSignatureStatuses`). |
 | `GET /health` | DB check |
 
 Genesis watcher: if `GENESIS_CREATORS` is set, every ~20s (`GENESIS_POLL_MS`) the server reads each wallet's signatures (`getSignaturesForAddress`, cursor stored in `genesis_watch`), finds pump.fun create/create_v2 (top-level or CPI) signed by that wallet, and registers the coin live with `genesis=true, born_order=n`. First create per wallet only (`GENESIS_MAX_PER_CREATOR`, default 1). `/coins` lists genesis coins first.

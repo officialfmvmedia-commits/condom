@@ -16,7 +16,7 @@ export function useSlotGate(creationSlot: number | null): { slotsLeft: number | 
       try { const s = await connection.getSlot('confirmed'); if (live) setCurrent(s) } catch { /* retry next tick */ }
     }
     tick()
-    const id = setInterval(tick, RULES.APPROX_SLOT_MS)
+    const id = setInterval(tick, 1000) // ~2.5 slots; keeps /rpc proxy load low
     return () => { live = false; clearInterval(id) }
   }, [connection, creationSlot])
   if (creationSlot == null || current == null) return { slotsLeft: null, unlocked: false }

@@ -148,7 +148,7 @@ export function explainSendError(e: unknown): string {
   if (/insufficient (funds|lamports)|0x1\b|Attempt to debit an account but found no record/i.test(all)) return 'Not enough SOL in your wallet for this transaction and fees.'
   if (/TooMuchSolRequired|slippage|0x1772|6002/i.test(all)) return 'Price moved past your slippage. Raise slippage or try again.'
   if (/blockhash not found|BlockhashNotFound/i.test(all)) return 'Network was busy (blockhash expired). Try again.'
-  if (/403|429|Too many requests|forbidden/i.test(all)) return 'The RPC refused the request. Set VITE_RPC_URL to a paid RPC (Helius, Triton, QuickNode).'
+  if (/403|429|Too many requests|forbidden/i.test(all)) return 'The network is busy right now. Wait a few seconds and try again.'
   const last = logs.filter((l) => /Error|failed/i.test(l)).slice(-1)[0]
   return `Transaction rejected: ${last ?? msg}`.slice(0, 300)
 }

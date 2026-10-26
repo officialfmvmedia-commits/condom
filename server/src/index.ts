@@ -19,6 +19,7 @@ const app = createApp({
   fetchTx: rpcFetchTx(rpcUrl),
   pinataJwt: env('PINATA_JWT'),
   allowedOrigins: [...DEFAULT_ORIGINS, ...extraOrigins],
+  rpcUpstream: rpcUrl,
 })
 
 const genesisCreators = (env('GENESIS_CREATORS') ?? '').split(',').map((s) => s.trim()).filter(Boolean)
@@ -40,5 +41,5 @@ setInterval(() => purgeExpired(db).catch((e) => console.error('purge failed', e)
 
 const port = Number(env('PORT') ?? 8080)
 serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, () => {
-  console.log(`condom-registry listening on :${port} (rpc ${new URL(rpcUrl).host}, pinata ${env('PINATA_JWT') ? 'on' : 'off'})`)
+  console.log(`condom-registry listening on :${port} (rpc ${env('RPC_URL') ? 'custom' : 'public default'}, pinata ${env('PINATA_JWT') ? 'on' : 'off'})`)
 })

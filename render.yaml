@@ -1,5 +1,6 @@
 # Render Blueprint for the CONDOM API (ticker registry + IPFS upload).
-# The existing static site (thecondom.fun) stays as-is; only add VITE_API_URL / VITE_RPC_URL to it.
+# The existing static site (thecondom.fun) stays as-is; its ONLY env var is VITE_API_URL.
+# Do NOT set any RPC URL/key on the static site: the browser uses ${VITE_API_URL}/rpc (proxy below).
 databases:
   - name: condom-db
     databaseName: condom
@@ -24,7 +25,7 @@ services:
         fromDatabase:
           name: condom-db
           property: connectionString
-      - key: RPC_URL # mainnet RPC used to verify create txs (Helius etc. recommended)
+      - key: RPC_URL # server-only mainnet RPC (Helius URL incl. key). Used by /rpc proxy, confirm, genesis watcher.
         sync: false
       - key: PINATA_JWT # Pinata JWT with pinFileToIPFS / files:write
         sync: false
