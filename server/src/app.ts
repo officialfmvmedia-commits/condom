@@ -67,6 +67,7 @@ export function coinJson(r: TickerRow) {
     createdAt: (r.live_at ?? r.created_at).getTime(),
     curveProgress: 0,
     signature: r.signature,
+    genesis: !!r.genesis,
   }
 }
 
@@ -106,7 +107,7 @@ const str = (v: unknown, field: string, max = 200): string => {
   return v
 }
 
-async function defaultFetchMetadata(uri: string) {
+export async function defaultFetchMetadata(uri: string) {
   if (!/^https:\/\//.test(uri)) return null
   const ctl = AbortSignal.timeout(5000)
   const res = await fetch(uri, { signal: ctl, headers: { accept: 'application/json' } })

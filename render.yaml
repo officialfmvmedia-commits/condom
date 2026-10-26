@@ -30,3 +30,7 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS # optional extra CORS origins, comma separated
         sync: false
+      - key: GENESIS_CREATORS # wallets whose first pump.fun create is auto-born on CONDOM (comma list)
+        value: 4nPHm2VvuUqdot31hvCKPXPUmF5GwJYdJd5tvgoqrJzr
+      - key: GENESIS_MAX_PER_CREATOR # optional, default 1 (first create only)
+        sync: false

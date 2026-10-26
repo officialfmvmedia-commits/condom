@@ -499,3 +499,4 @@ a.token-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hi); 
 .slippage-custom input { width: 4.5ch; padding: 6px 8px; border-radius: 10px; border: 1.5px solid #e2e8e4; text-align: right; font-weight: 800; }
 .slippage-custom input[aria-invalid="true"] { border-color: var(--flag); }
 .notice.launched a { color: inherit; text-decoration: underline; }
+.tc-first { margin-left: auto; align-self: flex-start; }

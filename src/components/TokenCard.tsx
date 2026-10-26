@@ -12,6 +12,7 @@ export function TokenCard({ t, preview = false }: { t: TokenSummary; preview?: b
           <div className="tc-name">{t.name || 'Your coin'}</div>
           <div className="tc-sym mono">${t.symbol || 'TICKER'}</div>
         </div>
+        {t.genesis && <span className="pill pill-green tc-first">First born</span>}
       </div>
       {t.description ? <p className="tc-desc">{t.description}</p> : <p className="tc-desc dim">No description yet.</p>}
       <div className="tc-curve">

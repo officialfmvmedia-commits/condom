@@ -1,7 +1,8 @@
 import { serve } from '@hono/node-server'
-import { createApp, DEFAULT_ORIGINS } from './app'
+import { createApp, defaultFetchMetadata, DEFAULT_ORIGINS } from './app'
+import { rpcListSigs, startGenesisWatcher } from './genesis'
 import { createPool, migrate, purgeExpired } from './db'
-import { rpcFetchTx } from './verify'
+import { isPubkey, rpcFetchTx } from './verify'
 
 const env = (k: string) => process.env[k]?.trim() || undefined
 
@@ -19,6 +20,21 @@ const app = createApp({
   pinataJwt: env('PINATA_JWT'),
   allowedOrigins: [...DEFAULT_ORIGINS, ...extraOrigins],
 })
+
+const genesisCreators = (env('GENESIS_CREATORS') ?? '').split(',').map((s) => s.trim()).filter(Boolean)
+for (const c of genesisCreators) if (!isPubkey(c)) throw new Error(`GENESIS_CREATORS: invalid address ${c}`)
+if (genesisCreators.length) {
+  startGenesisWatcher({
+    db,
+    creators: genesisCreators,
+    maxPerCreator: Number(env('GENESIS_MAX_PER_CREATOR') ?? 1),
+    listSigs: rpcListSigs(rpcUrl),
+    fetchTx: rpcFetchTx(rpcUrl),
+    fetchMetadata: defaultFetchMetadata,
+    log: console.log,
+  }, Number(env('GENESIS_POLL_MS') ?? 20_000))
+  console.log(`genesis watcher on for ${genesisCreators.length} wallet(s)`)
+}
 
 setInterval(() => purgeExpired(db).catch((e) => console.error('purge failed', e)), 60_000).unref()
 

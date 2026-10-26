@@ -93,7 +93,11 @@ export function decodeCreateData(data: Uint8Array): { version: 'v1' | 'v2'; name
 type RpcTx = {
   slot: number
   blockTime?: number | null
-  meta: { err: unknown; loadedAddresses?: { writable: string[]; readonly: string[] } } | null
+  meta: {
+    err: unknown
+    loadedAddresses?: { writable: string[]; readonly: string[] }
+    innerInstructions?: { index: number; instructions: { programIdIndex: number; accounts: number[]; data: string }[] }[] | null
+  } | null
   transaction: {
     signatures: string[]
     message: {
@@ -104,6 +108,7 @@ type RpcTx = {
   }
 }
 
+export type { RpcTx }
 export type FetchTx = (signature: string) => Promise<RpcTx | null>
 
 export function rpcFetchTx(rpcUrl: string): FetchTx {
@@ -160,4 +165,39 @@ export async function verifyCreateTx(
   if (user !== args.creator) throw new VerifyError('Creator wallet is not the pump.fun create user.')
   if (data.creator && data.creator !== args.creator) throw new VerifyError('Coin creator does not match the wallet.')
   return { mint, creator: args.creator, name: data.name, symbol: data.symbol, uri: data.uri, slot: tx.slot, blockTime: tx.blockTime ?? null, signature: args.signature }
+}
+
+export interface FoundCreate {
+  mint: string
+  user: string
+  creator: string
+  name: string
+  symbol: string
+  uri: string
+}
+
+/**
+ * Every pump.fun create/create_v2 in a successful tx, top-level or CPI (inner), with the
+ * tx signers. Used by the genesis watcher, which must also catch creates sent via routers.
+ */
+export function findCreates(tx: RpcTx): { signers: string[]; creates: FoundCreate[] } {
+  if (!tx.meta || tx.meta.err) return { signers: [], creates: [] }
+  const msg = tx.transaction.message
+  const keys = [...msg.accountKeys, ...(tx.meta.loadedAddresses?.writable ?? []), ...(tx.meta.loadedAddresses?.readonly ?? [])]
+  const signers = msg.accountKeys.slice(0, msg.header.numRequiredSignatures)
+  const ixs = [...msg.instructions, ...(tx.meta.innerInstructions ?? []).flatMap((g) => g.instructions)]
+  const creates: FoundCreate[] = []
+  for (const ix of ixs) {
+    if (keys[ix.programIdIndex] !== PUMP_PROGRAM_ID) continue
+    let d: ReturnType<typeof decodeCreateData>
+    try {
+      d = decodeCreateData(bs58.decode(ix.data))
+    } catch {
+      continue
+    }
+    const idx = ACCOUNT_INDEX[d.version]
+    const user = keys[ix.accounts[idx.user]]
+    creates.push({ mint: keys[ix.accounts[idx.mint]], user, creator: d.creator ?? user, name: d.name, symbol: d.symbol, uri: d.uri })
+  }
+  return { signers, creates }
 }

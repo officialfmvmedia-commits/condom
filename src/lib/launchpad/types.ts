@@ -14,6 +14,8 @@ export interface TokenSummary {
   /** Bonding curve progress, 0..1 (1 = graduated). */
   curveProgress: number
   devBuyPct?: number
+  /** The first coin born on CONDOM (genesis wallet). */
+  genesis?: boolean
 }
 
 export interface TokenSocials {
