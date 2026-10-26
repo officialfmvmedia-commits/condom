@@ -1,5 +1,5 @@
 import type { LaunchReport, CheckStatus } from '../lib/launchpad/report'
-import { Mark } from './Brand'
+import { Icon, GRADE_ICON } from './Brand'
 import { fmtPct, shortAddr } from '../lib/format'
 
 const PENDING = [
@@ -35,7 +35,7 @@ export function LaunchReportCard({ report, loading }: { report: LaunchReport | n
     <div className="glass card report">
       <div className="report-head">
         <div className="card-label">Launch report</div>
-        <span className={`grade-chip ${report.grade.toLowerCase()}`}><Mark size={12} color="currentColor" />{report.grade}</span>
+        <span className={`grade-chip ${report.grade.toLowerCase()}`}><Icon kind={GRADE_ICON[report.grade]} size={18} />{report.grade}</span>
       </div>
       <div className="report-stats">
         <div><span className="mono">{report.dev.block0Buy ? 'Yes' : 'No'}</span><small>dev in block 0</small></div>
@@ -55,7 +55,7 @@ export function LaunchReportCard({ report, loading }: { report: LaunchReport | n
           <div className="card-label small">Named: block-0 buyers</div>
           {named.slice(0, 8).map((b) => (
             <a key={b.signature} className="named-row mono" href={`https://solscan.io/tx/${b.signature}`} target="_blank" rel="noreferrer">
-              <span>{shortAddr(b.buyer, 5)}</span><span>{b.sol.toFixed(2)} SOL</span><span className="latex-text">{fmtPct(b.pctOfSupply)}</span>
+              <span>{shortAddr(b.buyer, 5)}</span><span>{b.sol.toFixed(2)} SOL</span><span className="green-text">{fmtPct(b.pctOfSupply)}</span>
             </a>
           ))}
           {named.length > 8 && <div className="dim fine">+{named.length - 8} more</div>}

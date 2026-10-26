@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletReadyState, type WalletName } from '@solana/wallet-adapter-base'
-import { Mark } from '../components/Brand'
+import { Logo } from '../components/Brand'
 
 const Ctx = createContext<{ open: () => void }>({ open: () => {} })
 export const useWalletModal = () => useContext(Ctx)
@@ -50,7 +50,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
     <div className="modal-scrim" onClick={onClose}>
       <div className="modal glass" role="dialog" aria-modal="true" aria-label="Connect a wallet" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
-          <Mark size={28} />
+          <Logo size={44} />
           <div>
             <h3>Connect a wallet</h3>
             <p className="muted">CONDOM never holds your keys.</p>
@@ -62,7 +62,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
             <button key={r.name} className="wallet-row" onClick={() => choose(r.name)} disabled={pending === r.name}>
               {r.icon ? <img src={r.icon} alt="" /> : <span className="wallet-dot" />}
               <span>{r.name}</span>
-              <span className="pill pill-latex">{pending === r.name ? 'Connecting…' : 'Detected'}</span>
+              <span className="pill pill-green">{pending === r.name ? 'Connecting…' : 'Detected'}</span>
             </button>
           ) : (
             <a key={r.name} className="wallet-row" href={r.url} target="_blank" rel="noreferrer">
@@ -75,7 +75,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
             <button key={w.adapter.name} className="wallet-row" onClick={() => choose(w.adapter.name)}>
               <img src={w.adapter.icon} alt="" />
               <span>{w.adapter.name}</span>
-              <span className="pill pill-latex">Detected</span>
+              <span className="pill pill-green">Detected</span>
             </button>
           ))}
         </div>

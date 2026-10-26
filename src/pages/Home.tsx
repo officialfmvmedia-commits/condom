@@ -26,19 +26,22 @@ export function Home() {
     <>
       <section className="hero container">
         <div className="hero-copy">
-          <div className="eyebrow rise" style={{ animationDelay: '40ms' }}><ProtectedBadge size="sm" label="Fair launches" /><span>pump.fun inside, rules on top</span></div>
-          <h1 className="hero-title rise" style={{ animationDelay: '120ms' }}>NO MORE<br /><span className="latex-text">BLOCK ZEROES.</span></h1>
-          <p className="hero-sub rise" style={{ animationDelay: '220ms' }}>The dev can't buy block 0. Max {RULES.MAX_DEV_BUY_SOL} SOL after.</p>
+          <div className="eyebrow rise" style={{ animationDelay: '40ms' }}><ProtectedBadge size="sm" label="Fair launches" /><span>pump.fun coins, launched clean</span></div>
+          <h1 className="hero-title rise" style={{ animationDelay: '120ms' }}>NO MORE<br /><span className="green-text">BLOCK ZEROES.</span></h1>
+          <p className="hero-sub rise" style={{ animationDelay: '220ms' }}>The dev can't buy block 0. <b>Max {RULES.MAX_DEV_BUY_SOL} SOL after.</b></p>
           <p className="hero-body rise" style={{ animationDelay: '300ms' }}>
-            Coins launch with no dev buy in them. The dev's one buy unlocks after block 0, capped at ≈1% of supply.
-            Anyone else who snipes block 0 gets named in a public Launch Report.
+            Every outside block-0 buyer gets named in a public Launch Report.
           </p>
           <div className="hero-ctas rise" style={{ animationDelay: '380ms' }}>
-            <Link to="/launch" className="btn btn-latex btn-lg">Launch a protected coin</Link>
+            <Link to="/launch" className="btn btn-green btn-lg">Launch a protected coin</Link>
             <Link to="/rules" className="btn btn-ghost btn-lg">How it works</Link>
           </div>
+          <p className="hero-tag rise" style={{ animationDelay: '440ms' }}>Every token born from CONDOM is a better coin.</p>
         </div>
-        <div className="hero-art rise" style={{ animationDelay: '200ms' }}><Seal size={460} /></div>
+        <div className="hero-art rise" style={{ animationDelay: '160ms' }}>
+          <img className="hero-pack" src="/img/hero-pack.webp" width={730} height={693} alt="A blister pack of green CONDOMs, one torn open" />
+          <Seal className="hero-sticker" />
+        </div>
       </section>
 
       <section className="container rules-strip">
@@ -85,7 +88,7 @@ export function Home() {
               body={search ? 'Try another name or ticker.' : status === 'not-connected'
                 ? 'Launches open soon. The first protected coin could be yours.'
                 : 'Be the first protected launch.'}
-              action={!search && <Link to="/launch" className="btn btn-latex">Start a launch</Link>}
+              action={!search && <Link to="/launch" className="btn btn-green">Start a launch</Link>}
             />
           </div>
         )}
@@ -94,11 +97,11 @@ export function Home() {
       <section className="container section">
         <Reveal className="compare glass">
           <div className="compare-head">
-            <h2>Same curve. <span className="latex-text">Better birth.</span></h2>
+            <h2>Same curve. <span className="green-text">Better birth.</span></h2>
             <p className="muted">Coins born here are real pump.fun tokens and graduate the same way. The difference is how they start.</p>
           </div>
           <div className="compare-table">
-            <div className="ct-row ct-h"><span /><span>Raw launch</span><span className="latex-text">CONDOM launch</span></div>
+            <div className="ct-row ct-h"><span /><span>Raw launch</span><span className="green-text">CONDOM launch</span></div>
             <div className="ct-row"><span>Dev buy in block 0</span><span className="dim">Allowed</span><span>Never</span></div>
             <div className="ct-row"><span>Dev buy size</span><span className="dim">Unlimited</span><span>Max {RULES.MAX_DEV_BUY_SOL} SOL (≈{capPct.toFixed(0)}%), after block 0</span></div>
             <div className="ct-row"><span>Side wallets in the create tx</span><span className="dim">Allowed</span><span>None. The create tx has no buys.</span></div>

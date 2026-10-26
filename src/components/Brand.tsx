@@ -1,39 +1,42 @@
 import type { CSSProperties } from 'react'
 
-/** The CONDOM seal ring: thick rolled rim + hairline inner ring. Geometry matches brand/src/gen.py. */
-export function Mark({ size = 24, color = 'var(--latex)', style }: { size?: number; color?: string; style?: CSSProperties }) {
-  const r = 50, sw = r * 0.34, ro = r - sw / 2
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" style={style} aria-hidden="true">
-      <circle cx="50" cy="50" r={ro} fill="none" stroke={color} strokeWidth={sw} />
-      <circle cx="50" cy="50" r={r * 0.36} fill="none" stroke={color} strokeWidth={r * 0.085} />
-    </svg>
-  )
+/** Photo logo: top-down green condom on white (brand/png/condom-real-top.jpg), round crop. */
+export function Logo({ size = 36, style }: { size?: number; style?: CSSProperties }) {
+  return <img className="logo" src={size > 48 ? '/img/logo-192.png' : '/img/logo-96.png'} width={size} height={size} alt="" style={style} />
 }
 
-export function Wordmark({ height = 20 }: { height?: number }) {
-  return <img src="/brand/condom-wordmark-bone.svg" alt="CONDOM" style={{ height, width: 'auto', display: 'block' }} />
+/** Simple rounded wordmark, live text in Nunito 900 (outlined copies in brand/svg). */
+export function Wordmark({ size = 22 }: { size?: number }) {
+  return <span className="wordmark" style={{ fontSize: size }}>CONDOM</span>
+}
+
+type IconKind = 'check' | 'warn' | 'cross' | 'info'
+/** Small rounded glyphs used in chips, badges and notices. */
+export function Icon({ kind = 'check', size = 14 }: { kind?: IconKind; size?: number }) {
+  const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 3, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  return (
+    <svg className="ico" width={size} height={size} viewBox="0 0 20 20" aria-hidden="true">
+      {kind === 'check' && <path d="M5 10.5l3.2 3.2L15 6.8" {...p} />}
+      {kind === 'cross' && <path d="M6 6l8 8M14 6l-8 8" {...p} />}
+      {kind === 'warn' && <path d="M10 5v6M10 15h.01" {...p} />}
+      {kind === 'info' && <path d="M10 9v6M10 5.5h.01" {...p} />}
+    </svg>
+  )
 }
 
 /** The badge every token born on CONDOM carries. */
 export function ProtectedBadge({ size = 'md', label = 'Protected' }: { size?: 'sm' | 'md'; label?: string }) {
   return (
     <span className={`badge-protected ${size}`}>
-      <Mark size={size === 'sm' ? 11 : 13} color="currentColor" />
+      <Icon kind="check" size={size === 'sm' ? 16 : 18} />
       {label}
     </span>
   )
 }
 
-/** Large animated seal used in heroes. */
-export function Seal({ size = 420 }: { size?: number }) {
-  return (
-    <div className="seal" style={{ width: size, height: size }} aria-hidden="true">
-      <div className="seal-orbit o1" />
-      <div className="seal-orbit o2" />
-      <div className="seal-orbit o3" />
-      <img className="seal-text" src="/brand/condom-seal-protected.svg" alt="" />
-      <div className="seal-core" />
-    </div>
-  )
+/** The PROTECTED seal sticker (brand/svg/condom-seal-protected.svg). */
+export function Seal({ className, style }: { className?: string; style?: CSSProperties }) {
+  return <img className={className} style={style} src="/img/seal-protected.svg" alt="" aria-hidden="true" />
 }
+
+export const GRADE_ICON: Record<string, IconKind> = { PROTECTED: 'check', CAUTION: 'warn', UNPROTECTED: 'cross' }

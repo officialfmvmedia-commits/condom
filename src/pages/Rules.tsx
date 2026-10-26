@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Reveal } from '../components/Reveal'
-import { Mark, ProtectedBadge } from '../components/Brand'
+import { Icon, ProtectedBadge } from '../components/Brand'
 import { RULES } from '../lib/rules'
 import { CURVE, supplyPctForFirstBuy, tokensForFirstBuy } from '../lib/curve'
 import { fmtNum } from '../lib/format'
@@ -57,9 +57,9 @@ export function Rules() {
       <Reveal className="glass card">
         <div className="card-label">Launch Report grades</div>
         <div className="grades">
-          <div className="grade-row"><span className="grade-chip protected"><Mark size={12} color="currentColor" />PROTECTED</span><p>No dev buy in block 0, dev buy within the cap, nobody else buying inside the create transaction, no dev-funded early buyers, and block-0 outsiders hold under {RULES.BLOCK0_CAUTION_PCT}% of supply.</p></div>
-          <div className="grade-row"><span className="grade-chip caution"><Mark size={12} color="currentColor" />CAUTION</span><p>The dev played clean, but outsiders took {RULES.BLOCK0_CAUTION_PCT}% or more in block 0, or bundle tips showed up in the launch block. They're named in the report.</p></div>
-          <div className="grade-row"><span className="grade-chip unprotected"><Mark size={12} color="currentColor" />UNPROTECTED</span><p>The dev bought in block 0, went over the cap, let someone else buy inside the create transaction, or funded early buyers. Most coins launched elsewhere get this grade, because their dev buys in the create transaction.</p></div>
+          <div className="grade-row"><span className="grade-chip protected"><Icon kind="check" size={18} />PROTECTED</span><p>No dev buy in block 0, dev buy within the cap, nobody else buying inside the create transaction, no dev-funded early buyers, and block-0 outsiders hold under {RULES.BLOCK0_CAUTION_PCT}% of supply.</p></div>
+          <div className="grade-row"><span className="grade-chip caution"><Icon kind="warn" size={18} />CAUTION</span><p>The dev played clean, but outsiders took {RULES.BLOCK0_CAUTION_PCT}% or more in block 0, or bundle tips showed up in the launch block. They're named in the report.</p></div>
+          <div className="grade-row"><span className="grade-chip unprotected"><Icon kind="cross" size={18} />UNPROTECTED</span><p>The dev bought in block 0, went over the cap, let someone else buy inside the create transaction, or funded early buyers. Most coins launched elsewhere get this grade, because their dev buys in the create transaction.</p></div>
         </div>
       </Reveal>
 
@@ -73,8 +73,8 @@ export function Rules() {
       </Reveal>
 
       <div className="rules-cta">
-        <h2>Every token born from CONDOM is a <span className="latex-text">better coin.</span></h2>
-        <Link to="/launch" className="btn btn-latex btn-lg">Launch a protected coin</Link>
+        <h2>Every token born from CONDOM is a <span className="green-text">better coin.</span></h2>
+        <Link to="/launch" className="btn btn-green btn-lg">Launch a protected coin</Link>
       </div>
     </section>
   )

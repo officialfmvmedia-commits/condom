@@ -94,7 +94,7 @@ export function Token() {
             <div className="chips">
               {(side === 'buy' ? ['0.1', '0.5', '1'] : ['25%', '50%', '100%']).map((c) => <button key={c} className="chip mono" onClick={() => side === 'buy' && setAmount(c)}>{c}</button>)}
             </div>
-            <button className="btn btn-latex btn-block" disabled>{live ? 'Trading opens soon' : 'Not tradable here yet'}</button>
+            <button className="btn btn-green btn-block" disabled>{live ? 'Trading opens soon' : 'Not tradable here yet'}</button>
           </div>
 
           <div className="glass card rise" style={{ animationDelay: '140ms' }}>

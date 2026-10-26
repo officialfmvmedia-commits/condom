@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useWalletModal } from '../wallet/WalletModal'
 import { TokenCard } from '../components/TokenCard'
-import { Mark, ProtectedBadge } from '../components/Brand'
+import { Icon, ProtectedBadge } from '../components/Brand'
 import { RULES, LIMITS } from '../lib/rules'
 import { CURVE, supplyPctForFirstBuy, tokensForFirstBuy } from '../lib/curve'
 import { fmtNum } from '../lib/format'
@@ -150,7 +150,7 @@ export function Launch() {
                   className="mono"
                   type="number" inputMode="decimal" min={0} max={RULES.MAX_DEV_BUY_SOL} step={RULES.DEV_BUY_STEP_SOL}
                   value={devBuy}
-                  style={{ width: `${Math.max(2, String(devBuy).length) + 0.4}ch` }}
+                  style={{ width: `${Math.max(2, String(devBuy).length) * 0.8 + 0.3}ch` }}
                   onChange={(e) => setDevBuyClamped(parseFloat(e.target.value))}
                   aria-label="Dev buy in SOL"
                   disabled={devBought}
@@ -168,7 +168,7 @@ export function Launch() {
                 value={devBuy} onChange={(e) => setDevBuyClamped(parseFloat(e.target.value))}
                 aria-label="Dev buy slider" disabled={devBought}
               />
-              <div className="slider-ticks mono dim"><span>0</span><span>0.1</span><span>0.2</span><span className="latex-text">0.3 max</span></div>
+              <div className="slider-ticks mono dim"><span>0</span><span>0.1</span><span>0.2</span><span className="green-text">0.3 max</span></div>
             </div>
 
             <ol className="b0-steps" aria-label="Launch sequence">
@@ -179,7 +179,7 @@ export function Launch() {
               <li className={step > 2 ? 'done' : step === 2 ? 'now' : ''}>
                 <span className="b0-dot">{step > 2 ? '✓' : '2'}</span>
                 <div><b>Block 0 passes</b><span>{step === 2 && gate.slotsLeft != null
-                  ? <span className="mono latex-text">Unlocks in {gate.slotsLeft} slot{gate.slotsLeft === 1 ? '' : 's'} · ~{((gate.slotsLeft * RULES.APPROX_SLOT_MS) / 1000).toFixed(1)}s</span>
+                  ? <span className="mono green-text">Unlocks in {gate.slotsLeft} slot{gate.slotsLeft === 1 ? '' : 's'} · ~{((gate.slotsLeft * RULES.APPROX_SLOT_MS) / 1000).toFixed(1)}s</span>
                   : `You sit out the creation slot plus ${RULES.DEV_BUY_MIN_SLOTS_AFTER_CREATE - 1} more. Anyone who buys in it gets named.`}</span></div>
               </li>
               <li className={devBought ? 'done' : step === 3 ? 'now' : ''}>
@@ -188,7 +188,7 @@ export function Launch() {
               </li>
             </ol>
             {launched && (
-              <button type="button" className="btn btn-latex btn-block" disabled={!gate.unlocked || busy || devBuy <= 0 || devBought} onClick={devBuyNow}>
+              <button type="button" className="btn btn-green btn-block" disabled={!gate.unlocked || busy || devBuy <= 0 || devBought} onClick={devBuyNow}>
                 {devBought ? 'Dev buy sent' : gate.unlocked ? `Buy ${devBuy} SOL now` : 'Locked until block 0 passes'}
               </button>
             )}
@@ -198,9 +198,9 @@ export function Launch() {
             </p>
           </div>
 
-          {notice && <div className={`notice ${notice.tone}`} role="status"><Mark size={16} color="currentColor" />{notice.text}</div>}
+          {notice && <div className={`notice ${notice.tone}`} role="status"><Icon kind={notice.tone === 'error' ? 'warn' : 'info'} size={18} />{notice.text}</div>}
 
-          <button className="btn btn-latex btn-lg btn-block rise" style={{ animationDelay: '180ms' }} type="submit" disabled={busy || !!launched}>
+          <button className="btn btn-green btn-lg btn-block rise" style={{ animationDelay: '180ms' }} type="submit" disabled={busy || !!launched}>
             {busy && !launched ? 'Preparing…' : launched ? 'Coin created' : wallet.publicKey ? 'Create coin' : 'Connect wallet to launch'}
           </button>
         </form>
