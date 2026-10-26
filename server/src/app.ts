@@ -36,6 +36,8 @@ export interface AppDeps {
   rpcFetch?: typeof fetch
   /** Live market data (curve reads, holders); omitted in tests that don't need it. */
   live?: Live
+  /** EXCLUDED_MINTS: hidden everywhere (404). */
+  excluded?: Set<string>
 }
 
 // ----------------------------------------------------------------- rate limit
@@ -145,6 +147,7 @@ export function createApp(deps: AppDeps) {
   const app = new Hono()
   const origins = deps.allowedOrigins ?? DEFAULT_ORIGINS
   const fetchMetadata = deps.fetchMetadata ?? defaultFetchMetadata
+  const excluded = deps.excluded ?? new Set<string>()
 
   app.use(
     '*',
@@ -224,6 +227,7 @@ export function createApp(deps: AppDeps) {
     const b = await readJson(c)
     const input = str(b.ticker, 'ticker', 64)
     const mint = str(b.mint, 'mint', 64)
+    if (excluded.has(mint)) throw new HttpError(422, 'This coin was removed from CONDOM.')
     const signature = str(b.signature, 'signature', 120)
     if (!isPubkey(mint)) throw new HttpError(400, 'Invalid mint.')
     const norm = normalizeTicker(input)
@@ -260,7 +264,7 @@ export function createApp(deps: AppDeps) {
   // Live CONDOM coins for the home grid (+ live price/mcap/curve/24h).
   app.get('/coins', async (c) => {
     const limit = Math.min(100, Math.max(1, Number(c.req.query('limit')) || 60))
-    const rows = await listLive(deps.db, limit)
+    const rows = (await listLive(deps.db, limit + excluded.size)).filter((r) => !excluded.has(r.mint!)).slice(0, limit)
     const items = rows.map(coinJson)
     if (deps.live && items.length) {
       const g = await deps.live.gridStats(items.map((i) => i.mint!)).catch(() => null)
@@ -271,6 +275,7 @@ export function createApp(deps: AppDeps) {
   })
 
   const registered = async (mint: string) => {
+    if (excluded.has(mint)) throw new HttpError(404, 'Not a CONDOM coin.')
     const row = await getByMint(deps.db, mint)
     if (!row) throw new HttpError(404, 'Not a CONDOM coin.')
     return row
@@ -281,7 +286,7 @@ export function createApp(deps: AppDeps) {
   }
 
   app.get('/coins/:mint', async (c) => {
-    const row = await getByMint(deps.db, c.req.param('mint'))
+    const row = excluded.has(c.req.param('mint')) ? null : await getByMint(deps.db, c.req.param('mint'))
     if (!row) return c.json({ error: 'Not a CONDOM coin.' }, 404)
     const coin = coinJson(row)
     if (deps.live) {

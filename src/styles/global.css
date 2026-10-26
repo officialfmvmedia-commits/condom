@@ -521,3 +521,9 @@ a.tr:hover, a.holder:hover { background: var(--tint-2); }
 .tr .tag { margin-left: 6px; }
 @media (max-width: 1000px) { .stat-strip { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 560px) { .stat-strip { grid-template-columns: repeat(2, 1fr); } }
+
+/* X link */
+.x-link { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 999px; background: #fff; color: var(--ink); box-shadow: 0 0 0 1px var(--line-hi); transition: transform .25s var(--bounce), background .2s, color .2s; flex: 0 0 auto; }
+.x-link:hover { background: var(--ink); color: #fff; transform: translateY(-1px); }
+.x-link.sm { width: 32px; height: 32px; }
+.x-link.sm svg { width: 14px; height: 14px; }

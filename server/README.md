@@ -18,7 +18,9 @@ Ticker registry (NO VAMPS) + IPFS metadata upload. Hono on Node 20, Postgres.
 
 Genesis watcher: if `GENESIS_CREATORS` is set, every ~20s (`GENESIS_POLL_MS`) the server reads each wallet's signatures (`getSignaturesForAddress`, cursor stored in `genesis_watch`), finds pump.fun create/create_v2 (top-level or CPI) signed by that wallet, and registers the coin live with `genesis=true, born_order=n`. First create per wallet only (`GENESIS_MAX_PER_CREATOR`, default 1). `/coins` lists genesis coins first.
 
-Env: `DATABASE_URL` (required), `GENESIS_CREATORS`, `GENESIS_MAX_PER_CREATOR`, `GENESIS_POLL_MS`, `RPC_URL`, `PINATA_JWT`, `ALLOWED_ORIGINS` (optional), `PORT`, `PGSSL=on|off` (override).
+`EXCLUDED_MINTS` (comma list): on startup (and every 60s) those coins are deleted from `tickers` (ticker freed), their trades/cursors dropped, they 404 on every `/coins/:mint*` route, the indexer skips them, and the genesis watcher never re-registers them (they don't count toward `GENESIS_MAX_PER_CREATOR`).
+
+Env: `DATABASE_URL` (required), `EXCLUDED_MINTS`, `GENESIS_CREATORS`, `GENESIS_MAX_PER_CREATOR`, `GENESIS_POLL_MS`, `RPC_URL`, `PINATA_JWT`, `ALLOWED_ORIGINS` (optional), `PORT`, `PGSSL=on|off` (override).
 CORS: thecondom.fun, www.thecondom.fun, localhost.
 
 ```

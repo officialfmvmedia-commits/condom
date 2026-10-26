@@ -39,3 +39,5 @@ services:
         sync: false
       - key: TRADE_INDEXER # optional, set to "off" to disable the trade indexer
         sync: false
+      - key: EXCLUDED_MINTS # comma list of mints removed from the site (tickers freed, trades dropped)
+        value: FxYVdzP68ctvgAsEBGw66ikLd78LfAVFkFy7ffEYpump

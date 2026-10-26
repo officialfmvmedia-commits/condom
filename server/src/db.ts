@@ -19,6 +19,10 @@ create table if not exists tickers (
 create index if not exists tickers_live_idx on tickers (live_at desc) where status = 'live';
 alter table tickers add column if not exists genesis boolean not null default false;
 alter table tickers add column if not exists born_order integer;
+create table if not exists excluded_mints (
+  mint       text primary key,
+  created_at timestamptz not null default now()
+);
 create table if not exists genesis_watch (
   creator        text primary key,
   last_signature text,

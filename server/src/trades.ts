@@ -255,7 +255,7 @@ export async function indexMint(d: IndexDeps, mint: string): Promise<number> {
 }
 
 /** Polls live, non-graduated coins every `intervalMs` (graduated ones every 12th tick). */
-export function startTradeIndexer(d: IndexDeps & { isGraduated: (mint: string) => Promise<boolean> }, intervalMs = 5000): () => void {
+export function startTradeIndexer(d: IndexDeps & { isGraduated: (mint: string) => Promise<boolean>; excluded?: Set<string> }, intervalMs = 5000): () => void {
   let stopped = false
   let timer: NodeJS.Timeout | undefined
   let tick = 0
@@ -264,8 +264,12 @@ export function startTradeIndexer(d: IndexDeps & { isGraduated: (mint: string) =
     try {
       if (client && (await client.query('select pg_try_advisory_lock(727002) as ok')).rows[0].ok) {
         try {
-          const { rows } = await d.db.query(`select mint from tickers where status = 'live' and mint is not null order by genesis desc, live_at desc limit 200`)
+          const { rows } = await d.db.query(
+            `select mint from tickers t where status = 'live' and mint is not null
+               and not exists (select 1 from excluded_mints e where e.mint = t.mint)
+             order by genesis desc, live_at desc limit 200`)
           for (const { mint } of rows) {
+            if (d.excluded?.has(mint)) continue
             try {
               if (tick % 12 !== 0 && (await d.isGraduated(mint))) continue
               await indexMint(d, mint)

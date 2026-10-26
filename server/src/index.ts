@@ -6,6 +6,7 @@ import { isPubkey, rpcFetchTx } from './verify'
 import { makeRpc } from './market'
 import { createLive } from './live'
 import { startTradeIndexer } from './trades'
+import { parseExcluded, purgeExcluded } from './excluded'
 
 const env = (k: string) => process.env[k]?.trim() || undefined
 
@@ -17,11 +18,21 @@ const extraOrigins = (env('ALLOWED_ORIGINS') ?? '').split(',').map((s) => s.trim
 const db = createPool(databaseUrl)
 await migrate(db)
 
+const excluded = parseExcluded(env('EXCLUDED_MINTS'))
+for (const m of excluded) if (!isPubkey(m)) throw new Error(`EXCLUDED_MINTS: invalid mint ${m}`)
+if (excluded.size) {
+  const r = await purgeExcluded(db, excluded)
+  console.log(`excluded ${excluded.size} mint(s): removed ${r.tickers} ticker row(s), ${r.trades} trade(s)`)
+  // keep purging in case something re-adds them (e.g. an in-flight confirm)
+  setInterval(() => purgeExcluded(db, excluded).catch((e) => console.error('purge excluded failed', e)), 60_000).unref()
+}
+
 const rpc = makeRpc(rpcUrl)
 const live = createLive({ db, call: rpc.call, batch: rpc.batch, rpcUrl })
 
 const app = createApp({
   live,
+  excluded,
   db,
   fetchTx: rpcFetchTx(rpcUrl),
   pinataJwt: env('PINATA_JWT'),
@@ -36,6 +47,7 @@ if (genesisCreators.length) {
     db,
     creators: genesisCreators,
     maxPerCreator: Number(env('GENESIS_MAX_PER_CREATOR') ?? 1),
+    excluded,
     listSigs: rpcListSigs(rpcUrl),
     fetchTx: rpcFetchTx(rpcUrl),
     fetchMetadata: defaultFetchMetadata,
@@ -45,7 +57,7 @@ if (genesisCreators.length) {
 }
 
 if (env('TRADE_INDEXER') !== 'off') {
-  startTradeIndexer({ db, call: rpc.call, batch: rpc.batch, rpcUrl, isGraduated: live.isGraduated, log: console.log }, Number(env('TRADE_POLL_MS') ?? 5000))
+  startTradeIndexer({ db, call: rpc.call, batch: rpc.batch, rpcUrl, excluded, isGraduated: live.isGraduated, log: console.log }, Number(env('TRADE_POLL_MS') ?? 5000))
   console.log('trade indexer on')
 }
 

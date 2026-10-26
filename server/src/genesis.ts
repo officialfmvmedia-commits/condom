@@ -31,13 +31,15 @@ export interface GenesisDeps {
   creators: string[]
   /** How many creates per creator are auto-registered. Default 1 (first only). */
   maxPerCreator?: number
+  /** Mints never auto-registered (and not counted toward maxPerCreator). */
+  excluded?: Set<string>
   listSigs: ListSigs
   fetchTx: FetchTx
   fetchMetadata: (uri: string) => Promise<{ image?: string } | null>
   log?: (msg: string) => void
 }
 
-export interface GenesisEvent { creator: string; mint: string; symbol: string; result: GenesisResult | 'skipped' }
+export interface GenesisEvent { creator: string; mint: string; symbol: string; result: GenesisResult | 'skipped' | 'excluded' }
 
 /** All signatures newer than `until` (exclusive), oldest first. Pages back fully on first run. */
 async function newSignatures(listSigs: ListSigs, address: string, until?: string) {
@@ -52,6 +54,11 @@ async function newSignatures(listSigs: ListSigs, address: string, until?: string
   return out.reverse()
 }
 
+async function isExcludedInDb(db: Db, mint: string): Promise<boolean> {
+  const { rows } = await db.query('select 1 from excluded_mints where mint = $1', [mint])
+  return rows.length > 0
+}
+
 /** One poll over all genesis creators. Safe to run repeatedly (idempotent). */
 export async function pollGenesis(d: GenesisDeps): Promise<GenesisEvent[]> {
   const max = d.maxPerCreator ?? 1
@@ -59,7 +66,10 @@ export async function pollGenesis(d: GenesisDeps): Promise<GenesisEvent[]> {
   const events: GenesisEvent[] = []
   for (const creator of d.creators) {
     const watch = await getWatch(d.db, creator)
-    let registered = watch?.registered ?? 0
+    // Count live genesis coins (excluded/purged ones don't count toward the limit).
+    let registered: number = (await d.db.query(
+      `select count(*)::int as n from tickers t where t.genesis and t.creator = $1
+         and not exists (select 1 from excluded_mints e where e.mint = t.mint)`, [creator])).rows[0].n
     let last = watch?.last_signature ?? null
     const sigs = await newSignatures(d.listSigs, creator, last ?? undefined)
     for (const s of sigs) {
@@ -69,6 +79,10 @@ export async function pollGenesis(d: GenesisDeps): Promise<GenesisEvent[]> {
         const { signers, creates } = findCreates(tx)
         for (const c of creates) {
           if (!signers.includes(creator) || (c.user !== creator && c.creator !== creator)) continue
+          if (d.excluded?.has(c.mint) || (await isExcludedInDb(d.db, c.mint))) {
+            events.push({ creator, mint: c.mint, symbol: c.symbol, result: 'excluded' })
+            continue
+          }
           if (registered >= max) {
             events.push({ creator, mint: c.mint, symbol: c.symbol, result: 'skipped' })
             continue
