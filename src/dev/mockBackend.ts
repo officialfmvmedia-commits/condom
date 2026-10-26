@@ -19,7 +19,6 @@ const tokens: TokenSummary[] = names.map(([name, symbol], i) => ({
   description: 'Dev mock token for layout screenshots. Not real.',
   creator: fake(100 + i), createdAt: now - (i + 1) * 7 * 60_000,
   marketCapSol: 28 + i * 9.5, curveProgress: Math.min(0.97, 0.06 + i * 0.12), devBuyPct: 0.4 + (i % 3) * 0.3,
-  grade: i % 4 === 3 ? 'CAUTION' : 'PROTECTED',
 }))
 const trades: Trade[] = Array.from({ length: 8 }, (_, i) => ({
   signature: fake(200 + i), mint: tokens[0].mint, side: i % 3 === 2 ? 'sell' : 'buy', trader: fake(300 + i),
@@ -49,6 +48,5 @@ export function createMockBackend(): LaunchpadBackend {
     async getToken(mint) { return tokens.find((t) => t.mint === mint) ?? tokens[0] },
     async getTrades() { return trades },
     async getHolders() { return holders },
-    async getLaunchReport() { return null },
   }
 }

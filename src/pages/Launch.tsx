@@ -2,10 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useWalletModal } from '../wallet/WalletModal'
 import { TokenCard } from '../components/TokenCard'
-import { Icon, ProtectedBadge } from '../components/Brand'
+import { Icon } from '../components/Brand'
 import { RULES, LIMITS } from '../lib/rules'
-import { CURVE, supplyPctForFirstBuy, tokensForFirstBuy } from '../lib/curve'
-import { fmtNum } from '../lib/format'
+import { supplyPctForFirstBuy } from '../lib/curve'
 import { useBackend } from '../lib/useBackend'
 import { NotImplementedError, type LaunchParams, type LaunchResult, type WalletSigner } from '../lib/launchpad/types'
 import { useSlotGate } from '../lib/useSlotGate'
@@ -23,7 +22,7 @@ export function Launch() {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [socials, setSocials] = useState({ x: '', telegram: '', website: '' })
   const [showSocials, setShowSocials] = useState(false)
-  const [devBuy, setDevBuy] = useState(0.1)
+  const [devBuyText, setDevBuyText] = useState('0.1')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<Notice>(null)
   const [drag, setDrag] = useState(false)
@@ -34,10 +33,11 @@ export function Launch() {
 
   useEffect(() => () => { if (imageUrl) URL.revokeObjectURL(imageUrl) }, [imageUrl])
 
+  const parsed = parseFloat(devBuyText)
+  const devBuy = Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+  const overCap = devBuy > RULES.MAX_DEV_BUY_SOL + 1e-9
   const pct = supplyPctForFirstBuy(devBuy)
-  const tokens = tokensForFirstBuy(devBuy)
-  const capPct = supplyPctForFirstBuy(RULES.MAX_DEV_BUY_SOL)
-  const fill = (devBuy / RULES.MAX_DEV_BUY_SOL) * 100
+  const fill = Math.min(100, (devBuy / RULES.MAX_DEV_BUY_SOL) * 100)
   const ready = name.trim().length > 0 && symbol.trim().length > 0
 
   const onFile = (f: File | undefined) => {
@@ -49,19 +49,17 @@ export function Launch() {
     setImageUrl(URL.createObjectURL(f))
   }
 
-  const setDevBuyClamped = (v: number) => {
-    const n = Number.isFinite(v) ? v : 0
-    setDevBuy(Math.round(Math.min(RULES.MAX_DEV_BUY_SOL, Math.max(0, n)) * 100) / 100)
-  }
+  const onDevBuyText = (v: string) => setDevBuyText(v.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1').slice(0, 8))
 
   const preview = useMemo(() => ({
     mint: 'preview', name: name || 'Your coin', symbol: symbol || 'TICKER', imageUrl,
     description: description || undefined, creator: wallet.publicKey?.toBase58() ?? 'you', createdAt: Date.now(),
-    curveProgress: 0, devBuyPct: pct, grade: 'PROTECTED' as const,
+    curveProgress: 0, devBuyPct: overCap ? undefined : pct,
   }), [name, symbol, imageUrl, description, wallet.publicKey, pct])
 
   const submit = async () => {
     setNotice(null)
+    if (overCap) return
     if (!ready) return setNotice({ tone: 'error', text: 'Give your coin a name and a ticker.' })
     if (!wallet.publicKey || !wallet.signTransaction) return open()
     if (!backend) return
@@ -79,7 +77,7 @@ export function Launch() {
   }
 
   const devBuyNow = async () => {
-    if (!backend || !launched || !gate.unlocked || devBuy <= 0) return
+    if (!backend || !launched || !gate.unlocked || devBuy <= 0 || overCap) return
     setBusy(true)
     try {
       await backend.devBuy({ mint: launched.mint, sol: devBuy, creationSlot: launched.slot, slippageBps: 500 }, wallet as unknown as WalletSigner)
@@ -95,9 +93,7 @@ export function Launch() {
   return (
     <section className="container section launch">
       <div className="page-head rise">
-        <ProtectedBadge size="sm" label="Protected launch" />
         <h1>Launch a coin</h1>
-        <p className="muted">Create first. Block 0 passes. Then your capped buy unlocks.</p>
       </div>
 
       <div className="launch-grid">
@@ -142,66 +138,50 @@ export function Launch() {
             </div>
           </div>
 
-          <div className="glass card rise" style={{ animationDelay: '120ms' }}>
-            <div className="card-label">Dev buy <span className="dim small-note">optional</span><span className="cap-chip mono">HARD CAP {RULES.MAX_DEV_BUY_SOL} SOL</span></div>
+          <div className={`glass card rise ${overCap ? 'devbuy-over' : ''}`} style={{ animationDelay: '120ms' }}>
+            <div className="card-label">Dev buy <span className="dim small-note">optional</span><span className="cap-chip">Max {RULES.MAX_DEV_BUY_SOL} SOL</span></div>
             <div className="devbuy-readout">
               <div className="devbuy-sol">
                 <input
                   className="mono"
-                  type="number" inputMode="decimal" min={0} max={RULES.MAX_DEV_BUY_SOL} step={RULES.DEV_BUY_STEP_SOL}
-                  value={devBuy}
-                  style={{ width: `${Math.max(2, String(devBuy).length) * 0.8 + 0.3}ch` }}
-                  onChange={(e) => setDevBuyClamped(parseFloat(e.target.value))}
+                  type="text" inputMode="decimal"
+                  value={devBuyText}
+                  style={{ width: `${Math.max(2, devBuyText.length) * 0.8 + 0.3}ch` }}
+                  onChange={(e) => onDevBuyText(e.target.value)}
                   aria-label="Dev buy in SOL"
+                  aria-invalid={overCap}
+                  aria-describedby="devbuy-hint"
                   disabled={devBought}
                 />
                 <span>SOL</span>
               </div>
               <div className="devbuy-pct">
-                <div className="mono big">≤{pct.toFixed(2)}%</div>
-                <div className="dim">of supply · up to {fmtNum(tokens, 0)} tokens</div>
+                <div className="mono big">{overCap ? '>1%' : `≈${pct.toFixed(2)}%`}</div>
+                <div className="dim">of supply</div>
               </div>
             </div>
             <div className="slider-wrap" style={{ ['--fill' as string]: `${fill}%` }}>
               <input
                 type="range" min={0} max={RULES.MAX_DEV_BUY_SOL} step={RULES.DEV_BUY_STEP_SOL}
-                value={devBuy} onChange={(e) => setDevBuyClamped(parseFloat(e.target.value))}
+                value={Math.min(devBuy, RULES.MAX_DEV_BUY_SOL)} onChange={(e) => setDevBuyText(e.target.value)}
                 aria-label="Dev buy slider" disabled={devBought}
               />
               <div className="slider-ticks mono dim"><span>0</span><span>0.1</span><span>0.2</span><span className="green-text">0.3 max</span></div>
             </div>
-
-            <ol className="b0-steps" aria-label="Launch sequence">
-              <li className={step > 1 ? 'done' : step === 1 ? 'now' : ''}>
-                <span className="b0-dot">{step > 1 ? '✓' : '1'}</span>
-                <div><b>Create</b><span>Your coin goes live with no buy in it.</span></div>
-              </li>
-              <li className={step > 2 ? 'done' : step === 2 ? 'now' : ''}>
-                <span className="b0-dot">{step > 2 ? '✓' : '2'}</span>
-                <div><b>Block 0 passes</b><span>{step === 2 && gate.slotsLeft != null
-                  ? <span className="mono green-text">Unlocks in {gate.slotsLeft} slot{gate.slotsLeft === 1 ? '' : 's'} · ~{((gate.slotsLeft * RULES.APPROX_SLOT_MS) / 1000).toFixed(1)}s</span>
-                  : `You sit out the creation slot plus ${RULES.DEV_BUY_MIN_SLOTS_AFTER_CREATE - 1} more. Anyone who buys in it gets named.`}</span></div>
-              </li>
-              <li className={devBought ? 'done' : step === 3 ? 'now' : ''}>
-                <span className="b0-dot">{devBought ? '✓' : <LockIcon />}</span>
-                <div><b>Dev buy unlocks after block 0</b><span>One buy, up to {RULES.MAX_DEV_BUY_SOL} SOL, signed separately.</span></div>
-              </li>
-            </ol>
-            {launched && (
-              <button type="button" className="btn btn-green btn-block" disabled={!gate.unlocked || busy || devBuy <= 0 || devBought} onClick={devBuyNow}>
-                {devBought ? 'Dev buy sent' : gate.unlocked ? `Buy ${devBuy} SOL now` : 'Locked until block 0 passes'}
+            {overCap
+              ? <p id="devbuy-hint" className="field-error" role="alert"><Icon kind="warn" size={18} />Max dev buy is {RULES.MAX_DEV_BUY_SOL} SOL (≈1%). Lower it to launch.</p>
+              : <p id="devbuy-hint" className="fine dim">Goes in after block zero{launched && step === 2 && gate.slotsLeft != null ? ` · unlocks in ~${((gate.slotsLeft * RULES.APPROX_SLOT_MS) / 1000).toFixed(1)}s` : '.'}</p>}
+            {launched && devBuy > 0 && (
+              <button type="button" className="btn btn-green btn-block devbuy-go" disabled={!gate.unlocked || busy || overCap || devBought} onClick={devBuyNow}>
+                {devBought ? 'Dev buy sent' : gate.unlocked ? `Buy ${devBuy} SOL` : 'Waiting for block zero to pass…'}
               </button>
             )}
-            <p className="fine dim">
-              {RULES.MAX_DEV_BUY_SOL} SOL buys ≈{capPct.toFixed(2)}% on a fresh pump.fun curve ({CURVE.VIRTUAL_SOL} SOL / {fmtNum(CURVE.VIRTUAL_TOKENS, 0)} virtual reserves), before fees.
-              If others buy in block 0 first, you get a little less. The cap and the wait are built into the transactions, not suggestions.
-            </p>
           </div>
 
           {notice && <div className={`notice ${notice.tone}`} role="status"><Icon kind={notice.tone === 'error' ? 'warn' : 'info'} size={18} />{notice.text}</div>}
 
-          <button className="btn btn-green btn-lg btn-block rise" style={{ animationDelay: '180ms' }} type="submit" disabled={busy || !!launched}>
-            {busy && !launched ? 'Preparing…' : launched ? 'Coin created' : wallet.publicKey ? 'Create coin' : 'Connect wallet to launch'}
+          <button className="btn btn-green btn-lg btn-block rise" style={{ animationDelay: '180ms' }} type="submit" disabled={busy || !!launched || overCap}>
+            {overCap ? `Dev buy over ${RULES.MAX_DEV_BUY_SOL} SOL` : busy && !launched ? 'Preparing…' : launched ? 'Coin created' : wallet.publicKey ? 'Launch' : 'Connect wallet to launch'}
           </button>
         </form>
 
@@ -211,13 +191,10 @@ export function Launch() {
             <TokenCard t={preview} preview />
           </div>
           <div className="glass card enforces rise" style={{ animationDelay: '160ms' }}>
-            <div className="card-label">What CONDOM enforces</div>
             <ul className="enforce-list">
-              <li><Check /> <div><b>No dev buy in block 0</b><span>The create transaction has no buy in it. Yours unlocks only after the creation slot has passed.</span></div></li>
-              <li><Check /> <div><b>Dev buy ≤ {RULES.MAX_DEV_BUY_SOL} SOL</b><span>One buy, ≈1% of supply at most. Anything bigger can't be built.</span></div></li>
-              <li><Check /> <div><b>Clean create</b><span>Only you and the new mint sign it. No buys, no side wallets, no tips to bundlers.</span></div></li>
-              <li><Eye /> <div><b>Outside block-0 buyers get named</b><span>We can't stop people buying on pump.fun directly in block 0. Every one of them goes in the public Launch Report.</span></div></li>
-              <li><Eye /> <div><b>Dev-funded wallets get flagged</b><span>Early buyers funded straight from your wallet show up as side wallets.</span></div></li>
+              <li><Check /><b>No dev buy in block zero</b></li>
+              <li><Check /><b>Max 1% / {RULES.MAX_DEV_BUY_SOL} SOL dev buy</b></li>
+              <li><Check /><b>No bundle tools</b></li>
             </ul>
           </div>
         </aside>
@@ -236,9 +213,3 @@ function Field({ label, count, children }: { label: string; count?: string; chil
 }
 
 const Check = () => <span className="li-ico ok">✓</span>
-const Eye = () => <span className="li-ico eye">◉</span>
-const LockIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
-    <rect x="5" y="11" width="14" height="10" rx="2.5" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
-  </svg>
-)

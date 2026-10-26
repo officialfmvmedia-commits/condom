@@ -24,8 +24,8 @@ export function Icon({ kind = 'check', size = 14 }: { kind?: IconKind; size?: nu
   )
 }
 
-/** The badge every token born on CONDOM carries. */
-export function ProtectedBadge({ size = 'md', label = 'Protected' }: { size?: 'sm' | 'md'; label?: string }) {
+/** Small green check pill. */
+export function ProtectedBadge({ size = 'md', label = 'Born on CONDOM' }: { size?: 'sm' | 'md'; label?: string }) {
   return (
     <span className={`badge-protected ${size}`}>
       <Icon kind="check" size={size === 'sm' ? 16 : 18} />
@@ -34,9 +34,7 @@ export function ProtectedBadge({ size = 'md', label = 'Protected' }: { size?: 's
   )
 }
 
-/** The PROTECTED seal sticker (brand/svg/condom-seal-protected.svg). */
+/** The seal sticker (brand/svg/condom-seal-protected.svg). Pure visual. */
 export function Seal({ className, style }: { className?: string; style?: CSSProperties }) {
   return <img className={className} style={style} src="/img/seal-protected.svg" alt="" aria-hidden="true" />
 }
-
-export const GRADE_ICON: Record<string, IconKind> = { PROTECTED: 'check', CAUTION: 'warn', UNPROTECTED: 'cross' }

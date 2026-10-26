@@ -1,6 +1,3 @@
-import type { LaunchReport } from './report'
-export type { LaunchReport } from './report'
-
 /** Base58 mint address. */
 export type Mint = string
 
@@ -17,7 +14,6 @@ export interface TokenSummary {
   /** Bonding curve progress, 0..1 (1 = graduated). */
   curveProgress: number
   devBuyPct?: number
-  grade?: LaunchReport['grade']
 }
 
 export interface TokenSocials {
@@ -122,7 +118,6 @@ export interface LaunchpadBackend {
   getToken(mint: Mint): Promise<TokenSummary | null>
   getTrades(mint: Mint, limit?: number): Promise<Trade[]>
   getHolders(mint: Mint, limit?: number): Promise<Holder[]>
-  getLaunchReport(mint: Mint): Promise<LaunchReport | null>
 }
 
 export class NotImplementedError extends Error {

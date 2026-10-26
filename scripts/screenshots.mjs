@@ -10,6 +10,7 @@ const pages = [
   { name: 'home', path: '/' },
   { name: 'launch', path: '/launch' },
   { name: 'launch-filled', path: '/launch', fill: true },
+  { name: 'launch-error', path: '/launch', fill: true, over: '0.5' },
   { name: 'token', path: `/token/${mint}` },
   { name: 'rules', path: '/rules' },
 ]
@@ -31,8 +32,9 @@ for (const vp of viewports) {
     if (p.fill) {
       await page.fill('input[placeholder="Better Coin"]', 'Better Coin')
       await page.fill('input[placeholder="BETTER"]', 'BETTER')
-      await page.fill('textarea', 'Born protected. Dev buy capped, block zero named.')
+      await page.fill('textarea', 'No block zeros. Born on CONDOM.')
       await page.locator('input[type=range]').fill('0.3')
+      if (p.over) { await page.fill('input[aria-label="Dev buy in SOL"]', p.over); await page.locator('input[aria-label="Dev buy in SOL"]').blur() }
     }
     // trigger scroll reveals, then return to top
     await page.evaluate(async () => {
@@ -47,7 +49,7 @@ for (const vp of viewports) {
     }
     await page.screenshot({ path: file, fullPage: true })
     console.log('wrote', file)
-    if (p.fill) {
+    if (p.fill && !p.over) {
       await page.click('button[type=submit]')
       await page.waitForTimeout(700)
       await page.screenshot({ path: `${out}/wallet-modal-${vp.tag}.png` })

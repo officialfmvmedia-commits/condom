@@ -2,9 +2,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useBackendQuery } from '../lib/useBackend'
 import { TokenAvatar } from '../components/TokenAvatar'
-import { GradePill } from '../components/Grade'
 import { EmptyState } from '../components/Empty'
-import { LaunchReportCard } from '../components/LaunchReportCard'
 import { fmtNum, fmtPct, shortAddr, timeAgo } from '../lib/format'
 
 export function Token() {
@@ -12,12 +10,11 @@ export function Token() {
   const [token, tLoading] = useBackendQuery((b) => b.getToken(mint), [mint])
   const [trades] = useBackendQuery((b) => b.getTrades(mint, 50), [mint])
   const [holders] = useBackendQuery((b) => b.getHolders(mint, 20), [mint])
-  const [report, rLoading] = useBackendQuery((b) => b.getLaunchReport(mint), [mint])
   const [side, setSide] = useState<'buy' | 'sell'>('buy')
   const [amount, setAmount] = useState('')
   const [copied, setCopied] = useState(false)
 
-  const name = token?.name ?? (tLoading ? 'Loading…' : report ? 'Outside coin' : 'Unlisted coin')
+  const name = token?.name ?? (tLoading ? 'Loading…' : 'Unlisted coin')
   const symbol = token?.symbol ?? '—'
   const progress = token?.curveProgress ?? 0
   const live = !!token
@@ -27,7 +24,7 @@ export function Token() {
       <div className="token-head rise">
         <TokenAvatar src={token?.imageUrl} symbol={token?.symbol ?? '?'} size={72} />
         <div className="th-id">
-          <div className="th-row"><h1>{name}</h1>{token && <GradePill grade={report?.grade ?? token.grade} />}</div>
+          <div className="th-row"><h1>{name}</h1></div>
           <div className="th-meta mono dim">
             <span>${symbol}</span>
             <button className="copy" onClick={() => { navigator.clipboard?.writeText(mint); setCopied(true); setTimeout(() => setCopied(false), 1200) }}>
@@ -44,9 +41,7 @@ export function Token() {
 
       {!tLoading && !token && (
         <div className="notice info rise">
-          {report
-            ? "This coin wasn't born on CONDOM, so it doesn't carry the seal. Its Launch Report is read straight from the chain."
-            : "This coin isn't listed on CONDOM. Charts, trades and holders appear here for coins born on CONDOM."}
+          This coin isn't listed on CONDOM.
         </div>
       )}
 
@@ -64,8 +59,6 @@ export function Token() {
             </div>
           </div>
 
-          <div className="rise" style={{ animationDelay: '100ms' }}><LaunchReportCard report={report} loading={rLoading} /></div>
-
           <div className="glass card rise" style={{ animationDelay: '120ms' }}>
             <div className="card-label">Trades</div>
             {trades && trades.length > 0 ? (
@@ -77,7 +70,7 @@ export function Token() {
                   </div>
                 ))}
               </div>
-            ) : <EmptyState compact title="No trades yet." body="Every trade lands here in real time." />}
+            ) : <EmptyState compact title="No trades yet." body="Trades show up here live." />}
           </div>
         </div>
 

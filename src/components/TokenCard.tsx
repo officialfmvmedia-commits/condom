@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { TokenSummary } from '../lib/launchpad/types'
 import { TokenAvatar } from './TokenAvatar'
-import { GradePill } from './Grade'
 import { fmtNum, fmtPct, shortAddr, timeAgo } from '../lib/format'
 
 export function TokenCard({ t, preview = false }: { t: TokenSummary; preview?: boolean }) {
@@ -13,7 +12,6 @@ export function TokenCard({ t, preview = false }: { t: TokenSummary; preview?: b
           <div className="tc-name">{t.name || 'Your coin'}</div>
           <div className="tc-sym mono">${t.symbol || 'TICKER'}</div>
         </div>
-        <GradePill grade={t.grade} />
       </div>
       {t.description ? <p className="tc-desc">{t.description}</p> : <p className="tc-desc dim">No description yet.</p>}
       <div className="tc-curve">
