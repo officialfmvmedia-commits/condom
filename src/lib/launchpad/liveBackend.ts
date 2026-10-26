@@ -1,6 +1,6 @@
 import { Connection, PublicKey, SendTransactionError, type VersionedTransaction } from '@solana/web3.js'
 import { RPC_URL } from '../config'
-import { ApiError, checkTicker, confirmTicker, getCoin, listCoins, reserveTicker, uploadMetadata } from '../registry'
+import { ApiError, checkTicker, confirmTicker, getCoin, getHoldersApi, getTradesApi, listCoins, reserveTicker, uploadMetadata } from '../registry'
 import {
   assertCleanCreate, assertCleanDevBuy, assertDevBuyAmount, assertLaunchParams, buildCreateTx, buildDevBuyTx,
 } from './launchTxBuilder'
@@ -94,11 +94,13 @@ export function createLiveBackend(rpcUrl = RPC_URL): LaunchpadBackend {
         const s = q.search.toLowerCase()
         items = items.filter((t) => t.name.toLowerCase().includes(s) || t.symbol.toLowerCase().includes(s) || t.mint === q.search)
       }
+      if (q.sort === 'rising') items = [...items].sort((a, b) => (b.change24h ?? -Infinity) - (a.change24h ?? -Infinity))
+      if (q.sort === 'graduating') items = [...items].sort((a, b) => (b.curveProgress ?? 0) - (a.curveProgress ?? 0))
       return { items }
     },
     async getToken(mint) { return getCoin(mint).catch(() => null) },
-    async getTrades() { return [] },
-    async getHolders() { return [] },
+    async getTrades(mint, limit = 50) { return getTradesApi(mint, limit).catch(() => []) },
+    async getHolders(mint) { return (await getHoldersApi(mint).catch(() => null))?.items ?? [] },
   }
 }
 

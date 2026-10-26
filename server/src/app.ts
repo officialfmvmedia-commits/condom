@@ -9,6 +9,9 @@ import { displayTicker, normalizeTicker, TickerError } from './normalize'
 import { isPubkey, verifyCreateTx, verifyReserveSignature, VerifyError, type FetchTx } from './verify'
 import { pinataUploadMetadata, UploadError } from './ipfs'
 import { rpcProxyHandler, RPC_MAX_BODY_BYTES } from './rpcProxy'
+import type { Live } from './live'
+import { candles, CANDLE_SECONDS, recentTrades } from './trades'
+import { getSolUsd } from './market'
 
 export const RESERVATION_MINUTES = 10
 
@@ -31,6 +34,8 @@ export interface AppDeps {
   /** requests per minute per IP for /rpc (a launch polls ~2/s for a minute) */
   rpcRateLimitPerMinute?: number
   rpcFetch?: typeof fetch
+  /** Live market data (curve reads, holders); omitted in tests that don't need it. */
+  live?: Live
 }
 
 // ----------------------------------------------------------------- rate limit
@@ -62,6 +67,14 @@ const isLocalOrigin = (o: string) => /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$
 
 function isActive(row: TickerRow, now = Date.now()) {
   return row.status === 'live' || (row.reserved_until != null && row.reserved_until.getTime() > now)
+}
+
+function liveFields(g?: { priceSol: number | null; marketCapSol: number | null; marketCapUsd: number | null; curveProgress: number | null; graduated: boolean; change24h: number | null; volume24hSol: number }) {
+  if (!g) return {}
+  return {
+    priceSol: g.priceSol, marketCapSol: g.marketCapSol ?? undefined, marketCapUsd: g.marketCapUsd,
+    curveProgress: g.curveProgress ?? 0, graduated: g.graduated, change24h: g.change24h, volume24hSol: g.volume24hSol,
+  }
 }
 
 export function coinJson(r: TickerRow) {
@@ -244,18 +257,73 @@ export function createApp(deps: AppDeps) {
     return c.json({ ok: true, coin: coinJson(row) })
   })
 
-  // Live CONDOM coins for the home grid.
+  // Live CONDOM coins for the home grid (+ live price/mcap/curve/24h).
   app.get('/coins', async (c) => {
     const limit = Math.min(100, Math.max(1, Number(c.req.query('limit')) || 60))
     const rows = await listLive(deps.db, limit)
-    c.header('Cache-Control', 'public, max-age=10')
-    return c.json({ items: rows.map(coinJson) })
+    const items = rows.map(coinJson)
+    if (deps.live && items.length) {
+      const g = await deps.live.gridStats(items.map((i) => i.mint!)).catch(() => null)
+      if (g) for (const it of items) Object.assign(it, liveFields(g.get(it.mint!)))
+    }
+    c.header('Cache-Control', 'public, max-age=5')
+    return c.json({ items })
   })
+
+  const registered = async (mint: string) => {
+    const row = await getByMint(deps.db, mint)
+    if (!row) throw new HttpError(404, 'Not a CONDOM coin.')
+    return row
+  }
+  const needLive = () => {
+    if (!deps.live) throw new HttpError(503, 'Live data is not configured.')
+    return deps.live
+  }
 
   app.get('/coins/:mint', async (c) => {
     const row = await getByMint(deps.db, c.req.param('mint'))
     if (!row) return c.json({ error: 'Not a CONDOM coin.' }, 404)
-    return c.json(coinJson(row))
+    const coin = coinJson(row)
+    if (deps.live) {
+      const s = await deps.live.stats(row.mint!).catch(() => null)
+      if (s) Object.assign(coin, { ...s, curveProgress: s.curveProgress ?? 0 })
+    }
+    return c.json(coin)
+  })
+
+  app.get('/coins/:mint/stats', async (c) => {
+    const row = await registered(c.req.param('mint'))
+    c.header('Cache-Control', 'public, max-age=2')
+    return c.json(await needLive().stats(row.mint!))
+  })
+
+  app.get('/coins/:mint/trades', async (c) => {
+    const row = await registered(c.req.param('mint'))
+    const limit = Math.min(200, Math.max(1, Number(c.req.query('limit')) || 50))
+    c.header('Cache-Control', 'public, max-age=2')
+    return c.json({ items: await recentTrades(deps.db, row.mint!, limit) })
+  })
+
+  app.get('/coins/:mint/candles', async (c) => {
+    const row = await registered(c.req.param('mint'))
+    const tf = c.req.query('tf') ?? '5m'
+    if (!CANDLE_SECONDS[tf]) throw new HttpError(400, `tf must be one of ${Object.keys(CANDLE_SECONDS).join(', ')}`)
+    const unit = c.req.query('unit') === 'sol' ? 'sol' : 'usd'
+    const [list, solUsd] = await Promise.all([candles(deps.db, row.mint!, tf), unit === 'usd' ? getSolUsd() : Promise.resolve(null)])
+    const k = unit === 'usd' && solUsd ? solUsd : 1
+    c.header('Cache-Control', 'public, max-age=2')
+    return c.json({
+      tf, unit: k === 1 ? 'sol' : 'usd', metric: 'marketCap',
+      items: list.map((x) => ({ ...x, open: x.open * k, high: x.high * k, low: x.low * k, close: x.close * k })),
+    })
+  })
+
+  app.get('/coins/:mint/holders', async (c) => {
+    const row = await registered(c.req.param('mint'))
+    const live = needLive()
+    const [items, count] = await Promise.all([live.holders(row.mint!, 20), live.holderCount(row.mint!).catch(() => null)])
+    c.header('Cache-Control', 'public, max-age=10')
+    return c.json({ items, count })
   })
 
   // Metadata upload (image + JSON) to IPFS through Pinata. Keeps the JWT server-side.

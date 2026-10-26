@@ -35,3 +35,7 @@ services:
         value: 4nPHm2VvuUqdot31hvCKPXPUmF5GwJYdJd5tvgoqrJzr
       - key: GENESIS_MAX_PER_CREATOR # optional, default 1 (first create only)
         sync: false
+      - key: TRADE_POLL_MS # optional, default 5000 (trade indexer interval)
+        sync: false
+      - key: TRADE_INDEXER # optional, set to "off" to disable the trade indexer
+        sync: false

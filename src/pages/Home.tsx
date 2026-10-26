@@ -4,7 +4,8 @@ import { Seal, ProtectedBadge, Icon } from '../components/Brand'
 import { TokenCard } from '../components/TokenCard'
 import { EmptyState } from '../components/Empty'
 import { Reveal } from '../components/Reveal'
-import { useBackendQuery } from '../lib/useBackend'
+import { useBackend, useBackendQuery } from '../lib/useBackend'
+import { usePoll } from '../lib/usePoll'
 import type { TokenSort } from '../lib/launchpad/types'
 import { RULES } from '../lib/rules'
 
@@ -24,7 +25,9 @@ const SORTS: { id: TokenSort; label: string }[] = [
 export function Home() {
   const [sort, setSort] = useState<TokenSort>('new')
   const [search, setSearch] = useState('')
-  const [page, loading] = useBackendQuery((b) => b.listTokens({ sort, search: search || undefined, limit: 24 }), [sort, search])
+  const backend = useBackend()
+  const [page] = usePoll(() => (backend ? backend.listTokens({ sort, search: search || undefined, limit: 24 }) : Promise.resolve(undefined)), 15000, [backend, sort, search])
+  const loading = page === undefined
   const [status] = useBackendQuery(async (b) => b.status, [])
 
   return (

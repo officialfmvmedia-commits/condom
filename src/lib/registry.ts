@@ -81,3 +81,42 @@ export async function getCoin(mint: string): Promise<CoinJson | null> {
     throw e
   }
 }
+
+// ----------------------------------------------------------------- live market data
+
+export interface CoinStats {
+  mint: string
+  priceSol: number | null
+  priceUsd: number | null
+  marketCapSol: number | null
+  marketCapUsd: number | null
+  solUsd: number | null
+  curveProgress: number | null
+  solInCurve: number | null
+  graduated: boolean
+  change24h: number | null
+  volume24hSol: number
+  volume24hUsd: number | null
+  txns24h: number
+  buys24h: number
+  sells24h: number
+  txns: number
+  athMarketCapSol: number | null
+  athMarketCapUsd: number | null
+  liquidityUsd: number | null
+  dexUrl: string | null
+  holderCount: number | null
+  updatedAt: number
+}
+
+export interface Candle { time: number; open: number; high: number; low: number; close: number; volume: number; trades: number }
+export type Timeframe = '1m' | '5m' | '15m' | '1h' | '4h' | '1d'
+
+const enc = encodeURIComponent
+export const getStats = (mint: string) => call<CoinStats>(`/coins/${enc(mint)}/stats`)
+export const getTradesApi = async (mint: string, limit = 50) =>
+  (await call<{ items: import('./launchpad/types').Trade[] }>(`/coins/${enc(mint)}/trades?limit=${limit}`)).items
+export const getCandles = (mint: string, tf: Timeframe) =>
+  call<{ tf: Timeframe; unit: 'usd' | 'sol'; items: Candle[] }>(`/coins/${enc(mint)}/candles?tf=${tf}`)
+export const getHoldersApi = (mint: string) =>
+  call<{ items: import('./launchpad/types').Holder[]; count: number | null }>(`/coins/${enc(mint)}/holders`)

@@ -1,4 +1,5 @@
 import pg from 'pg'
+import { TRADES_SQL } from './trades'
 
 export const SCHEMA_SQL = `
 create table if not exists tickers (
@@ -54,6 +55,7 @@ export function createPool(connectionString: string): pg.Pool {
 
 export async function migrate(db: Db): Promise<void> {
   await db.query(SCHEMA_SQL)
+  await db.query(TRADES_SQL)
 }
 
 export async function getTicker(db: Db, norm: string): Promise<TickerRow | null> {

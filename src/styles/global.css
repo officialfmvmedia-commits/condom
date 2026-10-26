@@ -500,3 +500,24 @@ a.token-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hi); 
 .slippage-custom input[aria-invalid="true"] { border-color: var(--flag); }
 .notice.launched a { color: inherit; text-decoration: underline; }
 .tc-first { margin-left: auto; align-self: flex-start; }
+
+/* live market data */
+.chg { font-weight: 800; }
+.chg.up { color: var(--green); }
+.chg.down { color: var(--flag); }
+.th-mc .chg { font-size: 14px; }
+.stat-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin: 0 0 18px; }
+.stat { padding: 12px 14px; border-radius: var(--r-sm); }
+.stat-k { font-size: 12px; font-weight: 800; }
+.stat-v { font-family: var(--display); font-size: 19px; font-weight: 900; margin-top: 2px; }
+.stat-sub { font-size: 11.5px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chart-top { justify-content: space-between; align-items: center; }
+.chart-canvas { position: absolute; inset: 0; }
+.live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-left: 6px; vertical-align: middle; animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+a.tr, a.holder { color: inherit; text-decoration: none; }
+a.tr:hover, a.holder:hover { background: var(--tint-2); }
+.tag.curve { color: var(--mist); background: #f1f4f2; }
+.tr .tag { margin-left: 6px; }
+@media (max-width: 1000px) { .stat-strip { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .stat-strip { grid-template-columns: repeat(2, 1fr); } }

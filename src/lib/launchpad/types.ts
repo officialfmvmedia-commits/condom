@@ -11,6 +11,12 @@ export interface TokenSummary {
   createdAt: number
   /** Market cap in SOL, if known. */
   marketCapSol?: number
+  marketCapUsd?: number | null
+  priceSol?: number | null
+  /** Percent change over 24h (or since launch if younger). */
+  change24h?: number | null
+  volume24hSol?: number
+  graduated?: boolean
   /** Bonding curve progress, 0..1 (1 = graduated). */
   curveProgress: number
   devBuyPct?: number
@@ -81,6 +87,7 @@ export interface Holder {
   amount: number
   pct: number
   tag?: 'dev' | 'curve' | 'block0' | 'dev-funded'
+  tokenAccount?: string
 }
 
 export type TokenSort = 'new' | 'rising' | 'graduating'

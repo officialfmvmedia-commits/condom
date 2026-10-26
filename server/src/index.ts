@@ -3,6 +3,9 @@ import { createApp, defaultFetchMetadata, DEFAULT_ORIGINS } from './app'
 import { rpcListSigs, startGenesisWatcher } from './genesis'
 import { createPool, migrate, purgeExpired } from './db'
 import { isPubkey, rpcFetchTx } from './verify'
+import { makeRpc } from './market'
+import { createLive } from './live'
+import { startTradeIndexer } from './trades'
 
 const env = (k: string) => process.env[k]?.trim() || undefined
 
@@ -14,7 +17,11 @@ const extraOrigins = (env('ALLOWED_ORIGINS') ?? '').split(',').map((s) => s.trim
 const db = createPool(databaseUrl)
 await migrate(db)
 
+const rpc = makeRpc(rpcUrl)
+const live = createLive({ db, call: rpc.call, batch: rpc.batch, rpcUrl })
+
 const app = createApp({
+  live,
   db,
   fetchTx: rpcFetchTx(rpcUrl),
   pinataJwt: env('PINATA_JWT'),
@@ -35,6 +42,11 @@ if (genesisCreators.length) {
     log: console.log,
   }, Number(env('GENESIS_POLL_MS') ?? 20_000))
   console.log(`genesis watcher on for ${genesisCreators.length} wallet(s)`)
+}
+
+if (env('TRADE_INDEXER') !== 'off') {
+  startTradeIndexer({ db, call: rpc.call, batch: rpc.batch, rpcUrl, isGraduated: live.isGraduated, log: console.log }, Number(env('TRADE_POLL_MS') ?? 5000))
+  console.log('trade indexer on')
 }
 
 setInterval(() => purgeExpired(db).catch((e) => console.error('purge failed', e)), 60_000).unref()

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { TokenSummary } from '../lib/launchpad/types'
 import { TokenAvatar } from './TokenAvatar'
-import { fmtNum, fmtPct, shortAddr, timeAgo } from '../lib/format'
+import { fmtChange, fmtNum, fmtPct, fmtUsd, shortAddr, timeAgo } from '../lib/format'
 
 export function TokenCard({ t, preview = false }: { t: TokenSummary; preview?: boolean }) {
   const body = (
@@ -18,12 +18,15 @@ export function TokenCard({ t, preview = false }: { t: TokenSummary; preview?: b
       <div className="tc-curve">
         <div className="bar"><i style={{ width: `${Math.max(2, t.curveProgress * 100)}%` }} /></div>
         <div className="tc-meta mono">
-          <span>{t.marketCapSol != null ? `MC ${fmtNum(t.marketCapSol)} SOL` : 'MC —'}</span>
-          <span>{fmtPct(t.curveProgress * 100, 0)} curve</span>
+          <span>
+            {t.marketCapUsd != null ? `MC ${fmtUsd(t.marketCapUsd)}` : t.marketCapSol != null ? `MC ${fmtNum(t.marketCapSol)} SOL` : 'MC —'}
+            {t.change24h != null && <b className={`chg ${t.change24h >= 0 ? 'up' : 'down'}`}> {fmtChange(t.change24h)}</b>}
+          </span>
+          <span>{t.graduated ? 'graduated' : `${fmtPct(t.curveProgress * 100, t.curveProgress < 0.1 ? 1 : 0)} curve`}</span>
         </div>
       </div>
       <div className="tc-foot mono dim">
-        <span>dev {t.devBuyPct != null ? fmtPct(t.devBuyPct, 2) : '—'}</span>
+        <span>{t.volume24hSol != null ? `vol ${fmtNum(t.volume24hSol)} SOL` : `dev ${t.devBuyPct != null ? fmtPct(t.devBuyPct, 2) : '—'}`}</span>
         <span>{preview ? 'just now' : `${shortAddr(t.creator)} · ${timeAgo(t.createdAt)}`}</span>
       </div>
     </>
