@@ -1,0 +1,13 @@
+<!doctype html><html><head><link rel="stylesheet" href="common.css"><style>
+body{width:1080px;height:1080px;position:relative}
+.glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%, transparent 0 150px, rgba(59,255,180,.16) 290px, transparent 560px)}
+.rings i{position:absolute;left:50%;top:50%;border:2px solid rgba(59,255,180,.12);border-radius:50%;transform:translate(-50%,-50%)}
+.mark{position:absolute;left:50%;top:50%;width:560px;height:560px;transform:translate(-50%,-50%);}
+.blur{filter:blur(46px);opacity:.6}
+.core{position:absolute;left:50%;top:50%;width:300px;height:300px;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle at 50% 40%,#0d1512,#060708 70%)}
+</style></head><body>
+
+<div class="rings"><i style="width:760px;height:760px"></i><i style="width:900px;height:900px;opacity:.6"></i></div>
+<img class="mark blur" src="../svg/condom-mark-latex.svg"><div class="core"></div><img class="mark" src="../svg/condom-mark-latex.svg">
+<div class="grain"></div>
+</body></html>
