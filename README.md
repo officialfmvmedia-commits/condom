@@ -1,10 +1,10 @@
 # CONDOM
 
-**NO MORE BLOCK ZEROES.** Protected pump.fun launches: dev buy hard-capped at 0.3 SOL (≈1% of supply), create + dev buy in one transaction with no side wallets, and a public Launch Report that names every block-0 buyer.
+**NO MORE BLOCK ZEROES.** The dev never buys in block 0. Protected pump.fun launches: a create-only transaction (no buys, no side wallets), one optional dev buy that unlocks after block 0 and is hard-capped at 0.3 SOL (≈1% of supply), and a public Launch Report that proves it and names every outside block-0 buyer.
 
 > Every token born from CONDOM is a better coin.
 
-Phase 1: brand + frontend + Launch Report analyzer. The launch transaction builder is a documented stub; nothing in this repo sends mainnet transactions.
+Phase 1: brand + frontend + Launch Report analyzer. The create and dev-buy transaction builders are documented stubs; nothing in this repo sends mainnet transactions.
 
 See `docs/` for details (brand, architecture). Quick start:
 

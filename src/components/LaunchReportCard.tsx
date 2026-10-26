@@ -3,7 +3,8 @@ import { Mark } from './Brand'
 import { fmtPct, shortAddr } from '../lib/format'
 
 const PENDING = [
-  { id: 'block0', label: 'Block-0 buys' },
+  { id: 'dev-block0', label: 'Dev buys in block 0' },
+  { id: 'block0', label: 'Outside block-0 buys' },
   { id: 'dev-cap', label: 'Dev buy % of supply' },
   { id: 'create-bundle', label: 'Bundle check' },
   { id: 'dev-funded', label: 'Dev-funded wallets' },
@@ -29,6 +30,7 @@ export function LaunchReportCard({ report, loading }: { report: LaunchReport | n
     )
   }
   const named = report.earlyBuys.filter((b) => b.block0 && !b.isDev)
+  const funded = report.earlyBuys.filter((b) => b.fundedByDev)
   return (
     <div className="glass card report">
       <div className="report-head">
@@ -36,7 +38,8 @@ export function LaunchReportCard({ report, loading }: { report: LaunchReport | n
         <span className={`grade-chip ${report.grade.toLowerCase()}`}><Mark size={12} color="currentColor" />{report.grade}</span>
       </div>
       <div className="report-stats">
-        <div><span className="mono">{report.summary.block0Buyers}</span><small>block-0 buyers</small></div>
+        <div><span className="mono">{report.dev.block0Buy ? 'Yes' : 'No'}</span><small>dev in block 0</small></div>
+        <div><span className="mono">{report.summary.block0Buyers}</span><small>outside block-0</small></div>
         <div><span className="mono">{fmtPct(report.dev.buyPctOfSupply)}</span><small>dev buy</small></div>
         <div><span className="mono">{report.summary.devFundedWallets}</span><small>dev-funded</small></div>
       </div>
@@ -56,6 +59,16 @@ export function LaunchReportCard({ report, loading }: { report: LaunchReport | n
             </a>
           ))}
           {named.length > 8 && <div className="dim fine">+{named.length - 8} more</div>}
+        </div>
+      )}
+      {funded.length > 0 && (
+        <div className="named">
+          <div className="card-label small">Flagged: funded by the dev</div>
+          {funded.slice(0, 8).map((b) => (
+            <a key={b.signature + b.buyer} className="named-row mono" href={`https://solscan.io/tx/${b.fundingSignatures[0] ?? b.signature}`} target="_blank" rel="noreferrer">
+              <span>{shortAddr(b.buyer, 5)}</span><span>+{b.slotOffset} slot{b.slotOffset === 1 ? '' : 's'}</span><span className="flag-text">{fmtPct(b.pctOfSupply)}</span>
+            </a>
+          ))}
         </div>
       )}
       <p className="fine dim">Slots {report.window.fromSlot}–{report.window.toSlot} · generated {new Date(report.generatedAt).toLocaleString()}</p>

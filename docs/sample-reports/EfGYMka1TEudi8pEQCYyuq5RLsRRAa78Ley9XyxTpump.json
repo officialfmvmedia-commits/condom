@@ -21,7 +21,9 @@
     "wallet": "7mj8TX5KxRkWkkpHrVqQrNcJ4uN7ecUVMYeXVkXscMgR",
     "buySol": 0.103661,
     "buyTokens": 3694845.43,
-    "buyPctOfSupply": 0.1847
+    "buyPctOfSupply": 0.1847,
+    "block0Buy": true,
+    "firstBuySlotOffset": 0
   },
   "earlyBuys": [
     {
@@ -70,16 +72,22 @@
   },
   "checks": [
     {
+      "id": "dev-block0",
+      "label": "Dev in block 0",
+      "status": "fail",
+      "detail": "Dev bought 0.104 SOL in block 0 (inside the create tx)"
+    },
+    {
       "id": "dev-cap",
-      "label": "Dev buy",
+      "label": "Dev buy size",
       "status": "pass",
-      "detail": "0.104 SOL · 0.18% of supply (cap 0.3 SOL)"
+      "detail": "0.104 SOL · 0.18% of supply (cap 0.3 SOL / 1.07%)"
     },
     {
       "id": "create-bundle",
       "label": "Bundle check",
       "status": "pass",
-      "detail": "Only the dev bought in the create tx"
+      "detail": "No other wallet bought inside the create tx"
     },
     {
       "id": "dev-funded",
@@ -89,7 +97,7 @@
     },
     {
       "id": "block0",
-      "label": "Block-0 buys",
+      "label": "Outside block-0 buys",
       "status": "pass",
       "detail": "No outsider bought in block 0"
     },

@@ -41,6 +41,7 @@ img { display: block; max-width: 100%; }
 .muted { color: var(--mist); }
 .dim { color: var(--dim); }
 .latex-text { color: var(--latex); }
+.flag-text { color: var(--flag); }
 .fine { font-size: 12.5px; line-height: 1.5; }
 .link { color: var(--latex); font-weight: 500; transition: opacity .2s; }
 .link:hover { opacity: .75; }
@@ -260,6 +261,16 @@ a.token-card:hover { transform: translateY(-4px); border-color: rgba(59,255,180,
 .slider-wrap input[type=range]:active::-webkit-slider-thumb { transform: scale(1.12); }
 .slider-wrap input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--text); border: 5px solid var(--latex); }
 .slider-ticks { display: flex; justify-content: space-between; font-size: 11.5px; margin-top: 4px; }
+.small-note { font-size: 11px; letter-spacing: .08em; text-transform: none; font-weight: 500; }
+.b0-steps { list-style: none; display: flex; flex-direction: column; gap: 0; margin: 6px 0 16px; padding: 4px 0 0; border-top: 1px solid var(--line); }
+.b0-steps li { position: relative; display: flex; gap: 14px; padding: 14px 0 4px; }
+.b0-steps li:not(:last-child)::after { content: ''; position: absolute; left: 13px; top: 46px; bottom: -10px; width: 1px; background: var(--line-hi); }
+.b0-steps b { display: block; font-weight: 600; font-size: 14.5px; }
+.b0-steps span:not(.b0-dot) { display: block; color: var(--mist); font-size: 13.5px; margin-top: 2px; }
+.b0-dot { flex-shrink: 0; width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center; font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--mist); background: rgba(255,255,255,.04); border: 1px solid var(--line-hi); }
+.b0-steps li.now .b0-dot { color: var(--latex); border-color: rgba(59,255,180,.5); box-shadow: 0 0 0 4px rgba(59,255,180,.1); animation: breathe 2.4s ease-in-out infinite; }
+.b0-steps li.done .b0-dot { background: var(--latex); color: var(--latex-ink); border-color: var(--latex); }
+.b0-steps li:last-child .b0-dot { color: var(--latex); border-color: rgba(59,255,180,.35); }
 .notice { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: var(--r-sm); font-size: 14px; animation: rise .5s var(--ease) both; }
 .notice.info { background: var(--latex-soft); border: 1px solid rgba(59,255,180,.25); color: #c9ffe9; }
 .notice.error { background: rgba(255,93,115,.1); border: 1px solid rgba(255,93,115,.3); color: #ffd1d8; }
@@ -304,7 +315,7 @@ a.token-card:hover { transform: translateY(-4px); border-color: rgba(59,255,180,
 .curve-big { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
 .report-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .report-head .card-label { margin: 0; }
-.report-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+.report-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
 .report-stats > div { min-width: 0; padding: 12px; border-radius: 12px; background: rgba(0,0,0,.25); border: 1px solid var(--line); display: flex; flex-direction: column; }
 .report-stats .mono { font-size: 20px; letter-spacing: -.02em; }
 .report-stats small { color: var(--mist); font-size: 11.5px; }
@@ -317,7 +328,7 @@ a.token-card:hover { transform: translateY(-4px); border-color: rgba(59,255,180,
 .report-checks .fail .rc-ico { background: var(--flag); color: #1d0307; }
 .report-checks li > span:last-child { text-align: right; }
 .rc-detail { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 720px) { .report-checks li { grid-template-columns: 24px 1fr; } .rc-detail { grid-column: 2; text-align: left !important; white-space: normal; margin-top: -6px; } }
+@media (max-width: 720px) { .report-stats { grid-template-columns: repeat(2, 1fr); } .report-checks li { grid-template-columns: 24px 1fr; } .rc-detail { grid-column: 2; text-align: left !important; white-space: normal; margin-top: -6px; } }
 .report .fine { margin-top: 12px; }
 .named-row { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; padding: 7px 10px; border-radius: 10px; font-size: 12.5px; transition: background .2s; }
 .named-row:hover { background: rgba(255,255,255,.05); }

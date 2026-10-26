@@ -13,6 +13,7 @@ import { parseTradeEvents } from './pumpEvents'
 import { Rpc, accountKeys, type RawTx, type SigInfo, type TokenBal } from './rpc'
 import type { EarlyBuy, LaunchReport, ReportCheck, Grade } from '../../src/lib/launchpad/report'
 import { RULES } from '../../src/lib/rules'
+import { supplyPctForFirstBuy } from '../../src/lib/curve'
 
 export const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P'
 export const PUMP_AMM_PROGRAM = 'pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA'
@@ -27,6 +28,8 @@ export const JITO_TIP_ACCOUNTS = new Set([
 ])
 /** Small tolerance over the cap for rounding. */
 const DEV_CAP_TOLERANCE_SOL = 0.005
+/** Supply share the cap buys on a fresh 1B curve (≈1.06%). Used as a second cap when SOL can't be read (non-SOL quote). */
+const DEV_CAP_PCT = supplyPctForFirstBuy(RULES.MAX_DEV_BUY_SOL) + 0.01
 
 export interface AnalyzeOptions {
   rpcUrl?: string
@@ -117,6 +120,7 @@ export async function analyzeMint(mint: string, opts: AnalyzeOptions = {}): Prom
   const earlyBuys: EarlyBuy[] = []
   let usedFallback = false
   let migrations = 0
+  let nonSolQuote = false
   for (const { sig, tx } of txs) {
     const keys = accountKeys(tx)
     const jitoTip = keys.some((k, i) => JITO_TIP_ACCOUNTS.has(k) && tx.meta!.postBalances[i] > tx.meta!.preBalances[i])
@@ -125,6 +129,7 @@ export async function analyzeMint(mint: string, opts: AnalyzeOptions = {}): Prom
     // Graduation moves the curve's tokens into the AMM pool; that's not a buy.
     if (logs.some((l) => /^Program log: Instruction: Migrate(V\d)?$/.test(l))) { migrations++; continue }
     const events = parseTradeEvents(logs, mint).filter((e) => e.isBuy)
+    if (events.some((e) => e.solLamports === 0n && e.tokenAmount > 0n)) nonSolQuote = true
     if (events.length) {
       for (const e of events) {
         const tokens = Number(e.tokenAmount) / 10 ** decimals
@@ -157,6 +162,7 @@ export async function analyzeMint(mint: string, opts: AnalyzeOptions = {}): Prom
     }
   }
   if (usedFallback) notes.push('Some buys had no pump.fun trade event (AMM or routed); they were read from token balance changes. For AMM/other buys, SOL is what the buyer spent including fees.')
+  if (nonSolQuote) notes.push('Some curve buys reported 0 SOL (the curve likely uses a non-SOL quote token). Their size is judged by % of supply instead.')
   if (migrations) notes.push('The coin graduated inside the report window; the migration to the AMM pool is not counted as a buy.')
 
   /* 6. Side-wallet trace: did the dev wallet send SOL straight to an early buyer before they bought? */
@@ -194,46 +200,8 @@ export async function analyzeMint(mint: string, opts: AnalyzeOptions = {}): Prom
   }
 
   /* 7. Summarize, check, grade. */
-  const dev = earlyBuys.filter((b) => b.isDev)
-  const devBuySol = sum(dev.map((b) => b.sol))
-  const devBuyTokens = sum(dev.map((b) => b.tokens))
-  const out = earlyBuys.filter((b) => !b.isDev)
-  const b0 = out.filter((b) => b.block0)
-  const funded = out.filter((b) => b.fundedByDev)
-  const createExtra = uniq(out.filter((b) => b.inCreateTx).map((b) => b.buyer))
-  const jitoB0 = b0.filter((b) => b.jitoTip)
   const createJito = earlyBuys.some((b) => b.inCreateTx && b.jitoTip) || hasJitoTip(createTx)
-  const block0Pct = sum(b0.map((b) => b.pctOfSupply))
-  const devPct = (devBuyTokens / totalSupply) * 100
-
-  const checks: ReportCheck[] = [
-    {
-      id: 'dev-cap', label: 'Dev buy',
-      status: devBuySol <= RULES.MAX_DEV_BUY_SOL + DEV_CAP_TOLERANCE_SOL ? 'pass' : 'fail',
-      detail: `${devBuySol.toFixed(3)} SOL · ${devPct.toFixed(2)}% of supply (cap ${RULES.MAX_DEV_BUY_SOL} SOL)`,
-    },
-    {
-      id: 'create-bundle', label: 'Bundle check',
-      status: createExtra.length ? 'fail' : 'pass',
-      detail: createExtra.length ? `${createExtra.length} other wallet(s) bought inside the create tx` : 'Only the dev bought in the create tx',
-    },
-    {
-      id: 'dev-funded', label: 'Dev-funded wallets',
-      status: funded.length ? 'fail' : 'pass',
-      detail: funded.length ? `${uniq(funded.map((b) => b.buyer)).length} early buyer(s) funded by the dev · ${sum(funded.map((b) => b.pctOfSupply)).toFixed(2)}%` : 'No early buyer was funded directly by the dev',
-    },
-    {
-      id: 'block0', label: 'Block-0 buys',
-      status: block0Pct >= RULES.BLOCK0_CAUTION_PCT ? 'warn' : 'pass',
-      detail: b0.length ? `${uniq(b0.map((b) => b.buyer)).length} outsider wallet(s) · ${block0Pct.toFixed(2)}% · named` : 'No outsider bought in block 0',
-    },
-    {
-      id: 'jito-bundle', label: 'Launch-slot tips',
-      status: createJito && jitoB0.length ? 'warn' : 'pass',
-      detail: createJito && jitoB0.length ? `Create tx and ${jitoB0.length} block-0 buy(s) paid Jito tips` : 'No tip-bundled buys alongside the create',
-    },
-  ]
-  const grade: Grade = checks.some((c) => c.status === 'fail') ? 'UNPROTECTED' : checks.some((c) => c.status === 'warn') ? 'CAUTION' : 'PROTECTED'
+  const graded = summarize(earlyBuys, totalSupply, createJito)
 
   notes.push('Funding trace is 1 hop (dev wallet → buyer). Multi-hop or exchange-routed funding is not detected.')
   notes.push('SOL per buy is the amount that went into the bonding curve, before pump.fun fees.')
@@ -249,8 +217,72 @@ export async function analyzeMint(mint: string, opts: AnalyzeOptions = {}): Prom
     totalSupply,
     creation: { signature: createSig, slot: creationSlot, blockTime: createTx.blockTime, creator, jitoTip: createJito },
     window: { fromSlot: creationSlot, toSlot, slotsAfterCreation: windowSlots },
-    dev: { wallet: creator, buySol: round(devBuySol, 6), buyTokens: round(devBuyTokens, 2), buyPctOfSupply: round(devPct, 4) },
+    dev: { wallet: creator, ...graded.dev },
     earlyBuys: earlyBuys.map((b) => ({ ...b, sol: round(b.sol, 6), tokens: round(b.tokens, 2), pctOfSupply: round(b.pctOfSupply, 4) })),
+    summary: graded.summary,
+    checks: graded.checks,
+    grade: graded.grade,
+    notes,
+  }
+}
+
+/**
+ * Pure grading step: turns the early buys into dev stats, summary, checks and a grade.
+ * Exported so saved reports can be regraded when the rules change (analyzer/src/regrade.ts).
+ */
+export function summarize(earlyBuys: EarlyBuy[], totalSupply: number, createJito: boolean) {
+  const dev = earlyBuys.filter((b) => b.isDev)
+  const devBuySol = sum(dev.map((b) => b.sol))
+  const devBuyTokens = sum(dev.map((b) => b.tokens))
+  const devB0 = dev.filter((b) => b.block0)
+  const out = earlyBuys.filter((b) => !b.isDev)
+  const b0 = out.filter((b) => b.block0)
+  const funded = out.filter((b) => b.fundedByDev)
+  const createBuys = earlyBuys.filter((b) => b.inCreateTx)
+  const createExtra = uniq(createBuys.filter((b) => !b.isDev).map((b) => b.buyer))
+  const jitoB0 = b0.filter((b) => b.jitoTip)
+  const block0Pct = sum(b0.map((b) => b.pctOfSupply))
+  const devPct = (devBuyTokens / totalSupply) * 100
+  const firstDev = dev.length ? Math.min(...dev.map((b) => b.slotOffset)) : null
+
+  const checks: ReportCheck[] = [
+    {
+      id: 'dev-block0', label: 'Dev in block 0',
+      status: devB0.length ? 'fail' : 'pass',
+      detail: devB0.length
+        ? `Dev bought ${sum(devB0.map((b) => b.sol)).toFixed(3)} SOL in block 0${devB0.some((b) => b.inCreateTx) ? ' (inside the create tx)' : ''}`
+        : firstDev != null ? `Dev's first buy came ${firstDev} slot(s) after creation` : 'Dev did not buy in the window',
+    },
+    {
+      id: 'dev-cap', label: 'Dev buy size',
+      status: devBuySol <= RULES.MAX_DEV_BUY_SOL + DEV_CAP_TOLERANCE_SOL && devPct <= DEV_CAP_PCT ? 'pass' : 'fail',
+      detail: `${devBuySol.toFixed(3)} SOL · ${devPct.toFixed(2)}% of supply (cap ${RULES.MAX_DEV_BUY_SOL} SOL / ${DEV_CAP_PCT.toFixed(2)}%)`,
+    },
+    {
+      id: 'create-bundle', label: 'Bundle check',
+      status: createExtra.length ? 'fail' : 'pass',
+      detail: createExtra.length ? `${createExtra.length} other wallet(s) bought inside the create tx`
+        : createBuys.length ? 'No other wallet bought inside the create tx' : 'No buys inside the create tx',
+    },
+    {
+      id: 'dev-funded', label: 'Dev-funded wallets',
+      status: funded.length ? 'fail' : 'pass',
+      detail: funded.length ? `${uniq(funded.map((b) => b.buyer)).length} early buyer(s) funded by the dev · ${sum(funded.map((b) => b.pctOfSupply)).toFixed(2)}%` : 'No early buyer was funded directly by the dev',
+    },
+    {
+      id: 'block0', label: 'Outside block-0 buys',
+      status: block0Pct >= RULES.BLOCK0_CAUTION_PCT ? 'warn' : 'pass',
+      detail: b0.length ? `${uniq(b0.map((b) => b.buyer)).length} wallet(s) · ${block0Pct.toFixed(2)}% · named` : 'No outsider bought in block 0',
+    },
+    {
+      id: 'jito-bundle', label: 'Launch-slot tips',
+      status: createJito && jitoB0.length ? 'warn' : 'pass',
+      detail: createJito && jitoB0.length ? `Create tx and ${jitoB0.length} block-0 buy(s) paid Jito tips` : 'No tip-bundled buys alongside the create',
+    },
+  ]
+  const grade: Grade = checks.some((c) => c.status === 'fail') ? 'UNPROTECTED' : checks.some((c) => c.status === 'warn') ? 'CAUTION' : 'PROTECTED'
+  return {
+    dev: { buySol: round(devBuySol, 6), buyTokens: round(devBuyTokens, 2), buyPctOfSupply: round(devPct, 4), block0Buy: devB0.length > 0, firstBuySlotOffset: firstDev },
     summary: {
       block0Buyers: uniq(b0.map((b) => b.buyer)).length,
       block0OutsiderPctOfSupply: round(block0Pct, 4),
@@ -262,7 +294,6 @@ export async function analyzeMint(mint: string, opts: AnalyzeOptions = {}): Prom
     },
     checks,
     grade,
-    notes,
   }
 }
 

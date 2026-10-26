@@ -21,7 +21,9 @@
     "wallet": "2MkHLkJLArARPyh2CsynQUx88zS6HMXSgHXayVpG2E5x",
     "buySol": 85.005359,
     "buyTokens": 793100000,
-    "buyPctOfSupply": 79.3152
+    "buyPctOfSupply": 79.3152,
+    "block0Buy": true,
+    "firstBuySlotOffset": 0
   },
   "earlyBuys": [
     {
@@ -116,16 +118,22 @@
   },
   "checks": [
     {
-      "id": "dev-cap",
-      "label": "Dev buy",
+      "id": "dev-block0",
+      "label": "Dev in block 0",
       "status": "fail",
-      "detail": "85.005 SOL · 79.32% of supply (cap 0.3 SOL)"
+      "detail": "Dev bought 85.005 SOL in block 0 (inside the create tx)"
+    },
+    {
+      "id": "dev-cap",
+      "label": "Dev buy size",
+      "status": "fail",
+      "detail": "85.005 SOL · 79.32% of supply (cap 0.3 SOL / 1.07%)"
     },
     {
       "id": "create-bundle",
       "label": "Bundle check",
       "status": "pass",
-      "detail": "Only the dev bought in the create tx"
+      "detail": "No other wallet bought inside the create tx"
     },
     {
       "id": "dev-funded",
@@ -135,9 +143,9 @@
     },
     {
       "id": "block0",
-      "label": "Block-0 buys",
+      "label": "Outside block-0 buys",
       "status": "warn",
-      "detail": "1 outsider wallet(s) · 19.88% · named"
+      "detail": "1 wallet(s) · 19.88% · named"
     },
     {
       "id": "jito-bundle",

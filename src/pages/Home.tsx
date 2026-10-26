@@ -28,10 +28,10 @@ export function Home() {
         <div className="hero-copy">
           <div className="eyebrow rise" style={{ animationDelay: '40ms' }}><ProtectedBadge size="sm" label="Fair launches" /><span>pump.fun inside, rules on top</span></div>
           <h1 className="hero-title rise" style={{ animationDelay: '120ms' }}>NO MORE<br /><span className="latex-text">BLOCK ZEROES.</span></h1>
-          <p className="hero-sub rise" style={{ animationDelay: '220ms' }}>Every block-0 buyer gets named. Publicly.</p>
+          <p className="hero-sub rise" style={{ animationDelay: '220ms' }}>The dev can't buy block 0. Max {RULES.MAX_DEV_BUY_SOL} SOL after.</p>
           <p className="hero-body rise" style={{ animationDelay: '300ms' }}>
-            Dev buys capped at {RULES.MAX_DEV_BUY_SOL} SOL. Create and dev buy go out in one clean transaction, with no side wallets riding along.
-            Every coin gets a public Launch Report.
+            Coins launch with no dev buy in them. The dev's one buy unlocks after block 0, capped at ≈1% of supply.
+            Anyone else who snipes block 0 gets named in a public Launch Report.
           </p>
           <div className="hero-ctas rise" style={{ animationDelay: '380ms' }}>
             <Link to="/launch" className="btn btn-latex btn-lg">Launch a protected coin</Link>
@@ -45,8 +45,8 @@ export function Home() {
         {[
           { k: `${RULES.MAX_DEV_BUY_SOL} SOL`, v: 'Max dev buy, hard cap' },
           { k: `≈${capPct.toFixed(0)}%`, v: 'Max dev share of supply' },
-          { k: '1 tx', v: 'Create + dev buy. No bundles.' },
-          { k: 'Block 0', v: 'Every buyer named in the report' },
+          { k: 'Block 0', v: 'Dev buys after it, never in it' },
+          { k: 'Named', v: 'Every outside block-0 buyer, publicly' },
         ].map((r, i) => (
           <Reveal key={r.v} delay={i * 70} className="rule-tile glass">
             <div className="rule-k">{r.k}</div>
@@ -99,9 +99,10 @@ export function Home() {
           </div>
           <div className="compare-table">
             <div className="ct-row ct-h"><span /><span>Raw launch</span><span className="latex-text">CONDOM launch</span></div>
-            <div className="ct-row"><span>Dev buy</span><span className="dim">Unlimited</span><span>Max {RULES.MAX_DEV_BUY_SOL} SOL (≈{capPct.toFixed(0)}%)</span></div>
-            <div className="ct-row"><span>Side wallets in the create tx</span><span className="dim">Allowed</span><span>Not possible through our flow</span></div>
-            <div className="ct-row"><span>Block-0 snipers</span><span className="dim">Invisible</span><span>Named in the Launch Report</span></div>
+            <div className="ct-row"><span>Dev buy in block 0</span><span className="dim">Allowed</span><span>Never</span></div>
+            <div className="ct-row"><span>Dev buy size</span><span className="dim">Unlimited</span><span>Max {RULES.MAX_DEV_BUY_SOL} SOL (≈{capPct.toFixed(0)}%), after block 0</span></div>
+            <div className="ct-row"><span>Side wallets in the create tx</span><span className="dim">Allowed</span><span>None. The create tx has no buys.</span></div>
+            <div className="ct-row"><span>Outside block-0 snipers</span><span className="dim">Invisible</span><span>Named in the Launch Report</span></div>
             <div className="ct-row"><span>Wallets funded by the dev</span><span className="dim">Your problem</span><span>Traced and flagged</span></div>
           </div>
           <div className="compare-foot"><Link to="/rules" className="link">Read exactly what we enforce, and what we can't →</Link></div>

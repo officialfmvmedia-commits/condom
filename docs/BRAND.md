@@ -1,6 +1,6 @@
 # CONDOM brand
 
-**Lines:** NO MORE BLOCK ZEROES. · MAX 1% DEV BUY · Every token born from CONDOM is a better coin. · Every block-0 buyer gets named. Publicly.
+**Lines:** NO MORE BLOCK ZEROES. (the dev never buys in block 0) · The dev can't buy block 0. Max 0.3 SOL after. · MAX 1% DEV BUY · Every token born from CONDOM is a better coin. · Outside block-0 buyers get named. Publicly.
 
 **Tone:** cheeky but premium. The safe-sex pun is carried by confidence ("protected", "born", "sealed"), never by imagery. No explicit visuals.
 

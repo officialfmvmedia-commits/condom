@@ -5,7 +5,7 @@
 
 export type Grade = 'PROTECTED' | 'CAUTION' | 'UNPROTECTED'
 export type CheckStatus = 'pass' | 'warn' | 'fail'
-export type CheckId = 'dev-cap' | 'create-bundle' | 'dev-funded' | 'block0' | 'jito-bundle'
+export type CheckId = 'dev-block0' | 'dev-cap' | 'create-bundle' | 'dev-funded' | 'block0' | 'jito-bundle'
 
 export interface ReportCheck {
   id: CheckId
@@ -56,6 +56,10 @@ export interface LaunchReport {
     buySol: number
     buyTokens: number
     buyPctOfSupply: number
+    /** The dev bought in the creation slot (incl. inside the create tx). Never allowed on CONDOM. */
+    block0Buy: boolean
+    /** Slots between creation and the dev's first buy in the window; null if no dev buy in the window. */
+    firstBuySlotOffset: number | null
   }
   earlyBuys: EarlyBuy[]
   summary: {

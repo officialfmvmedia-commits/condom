@@ -32,13 +32,26 @@ export interface LaunchParams {
   description: string
   image: File | null
   socials: TokenSocials
-  /** SOL for the creator's buy in the create transaction. Must be <= RULES.MAX_DEV_BUY_SOL. */
+  /**
+   * Planned dev buy in SOL (0 = none). NOT part of the create transaction: it is sent separately via
+   * devBuy() once the creation slot has passed. Must be <= RULES.MAX_DEV_BUY_SOL.
+   */
   devBuySol: number
 }
 
 export interface LaunchResult {
   mint: Mint
   signature: string
+  /** Slot the create transaction landed in ("block 0"). The dev buy unlocks after it. */
+  slot: number
+}
+
+export interface DevBuyParams {
+  mint: Mint
+  sol: number
+  /** Creation slot returned by launch(); the backend re-checks the slot gap before building. */
+  creationSlot: number
+  slippageBps: number
 }
 
 export interface TradeParams {
@@ -99,7 +112,10 @@ export type BackendStatus = 'live' | 'not-connected'
 export interface LaunchpadBackend {
   readonly id: string
   readonly status: BackendStatus
+  /** Creates the coin. The create transaction contains no buy. */
   launch(params: LaunchParams, signer: WalletSigner): Promise<LaunchResult>
+  /** The dev's one capped buy. Rejected unless current slot >= creationSlot + RULES.DEV_BUY_MIN_SLOTS_AFTER_CREATE. */
+  devBuy(params: DevBuyParams, signer: WalletSigner): Promise<TradeResult>
   buy(params: TradeParams, signer: WalletSigner): Promise<TradeResult>
   sell(params: TradeParams, signer: WalletSigner): Promise<TradeResult>
   listTokens(query: ListTokensQuery): Promise<Page<TokenSummary>>

@@ -21,7 +21,9 @@
     "wallet": "5JhQV8usNsBUC28xezh1jHVDRqZ7rgvVmqD8ShBYAz5W",
     "buySol": 0.02963,
     "buyTokens": 1058707.39,
-    "buyPctOfSupply": 0.1059
+    "buyPctOfSupply": 0.1059,
+    "block0Buy": true,
+    "firstBuySlotOffset": 0
   },
   "earlyBuys": [
     {
@@ -132,16 +134,22 @@
   },
   "checks": [
     {
+      "id": "dev-block0",
+      "label": "Dev in block 0",
+      "status": "fail",
+      "detail": "Dev bought 0.030 SOL in block 0 (inside the create tx)"
+    },
+    {
       "id": "dev-cap",
-      "label": "Dev buy",
+      "label": "Dev buy size",
       "status": "pass",
-      "detail": "0.030 SOL · 0.11% of supply (cap 0.3 SOL)"
+      "detail": "0.030 SOL · 0.11% of supply (cap 0.3 SOL / 1.07%)"
     },
     {
       "id": "create-bundle",
       "label": "Bundle check",
       "status": "pass",
-      "detail": "Only the dev bought in the create tx"
+      "detail": "No other wallet bought inside the create tx"
     },
     {
       "id": "dev-funded",
@@ -151,9 +159,9 @@
     },
     {
       "id": "block0",
-      "label": "Block-0 buys",
+      "label": "Outside block-0 buys",
       "status": "warn",
-      "detail": "3 outsider wallet(s) · 32.11% · named"
+      "detail": "3 wallet(s) · 32.11% · named"
     },
     {
       "id": "jito-bundle",
@@ -162,7 +170,7 @@
       "detail": "No tip-bundled buys alongside the create"
     }
   ],
-  "grade": "CAUTION",
+  "grade": "UNPROTECTED",
   "notes": [
     "Funding trace is 1 hop (dev wallet → buyer). Multi-hop or exchange-routed funding is not detected.",
     "SOL per buy is the amount that went into the bonding curve, before pump.fun fees.",

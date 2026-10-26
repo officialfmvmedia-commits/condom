@@ -36,6 +36,7 @@ export function createMockBackend(): LaunchpadBackend {
     id: 'dev-mock',
     status: 'live',
     async launch() { throw new NotImplementedError('Launching (dev mock)') },
+    async devBuy() { throw new NotImplementedError('The dev buy (dev mock)') },
     async buy() { throw new NotImplementedError('Buying (dev mock)') },
     async sell() { throw new NotImplementedError('Selling (dev mock)') },
     async listTokens(q) {

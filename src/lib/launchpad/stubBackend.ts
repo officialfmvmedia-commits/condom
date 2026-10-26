@@ -12,6 +12,7 @@ export function createStubBackend(): LaunchpadBackend {
     id: 'stub',
     status: 'not-connected',
     async launch() { throw new NotImplementedError('Launching') },
+    async devBuy() { throw new NotImplementedError('The dev buy') },
     async buy() { throw new NotImplementedError('Buying') },
     async sell() { throw new NotImplementedError('Selling') },
     async listTokens() { return { items: [] } },
