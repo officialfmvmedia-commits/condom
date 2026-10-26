@@ -30,6 +30,8 @@ export interface EarlyBuy {
   /** The buyer received SOL directly from the dev wallet before buying (1 hop). */
   fundedByDev: boolean
   fundingSignatures: string[]
+  /** Where the buy happened: pump.fun bonding curve, PumpSwap AMM (after graduation), or other routing. */
+  venue: 'curve' | 'amm' | 'other'
   /** Transaction paid a Jito tip (bundle / priority lane). */
   jitoTip: boolean
 }

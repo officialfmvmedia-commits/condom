@@ -17,7 +17,7 @@ export function Token() {
   const [amount, setAmount] = useState('')
   const [copied, setCopied] = useState(false)
 
-  const name = token?.name ?? (tLoading ? 'Loading…' : 'Unlisted coin')
+  const name = token?.name ?? (tLoading ? 'Loading…' : report ? 'Outside coin' : 'Unlisted coin')
   const symbol = token?.symbol ?? '—'
   const progress = token?.curveProgress ?? 0
   const live = !!token
@@ -43,7 +43,11 @@ export function Token() {
       </div>
 
       {!tLoading && !token && (
-        <div className="notice info rise">This coin isn't listed on CONDOM. Charts, trades and holders appear here for coins born on CONDOM.</div>
+        <div className="notice info rise">
+          {report
+            ? "This coin wasn't born on CONDOM, so it doesn't carry the seal. Its Launch Report is read straight from the chain."
+            : "This coin isn't listed on CONDOM. Charts, trades and holders appear here for coins born on CONDOM."}
+        </div>
       )}
 
       <div className="token-grid">
@@ -59,6 +63,8 @@ export function Token() {
               <div className="chart-empty"><div className="dim">Chart starts at the first trade.</div></div>
             </div>
           </div>
+
+          <div className="rise" style={{ animationDelay: '100ms' }}><LaunchReportCard report={report} loading={rLoading} /></div>
 
           <div className="glass card rise" style={{ animationDelay: '120ms' }}>
             <div className="card-label">Trades</div>
@@ -100,7 +106,6 @@ export function Token() {
             <div className="bar lg"><i style={{ width: `${Math.max(1.5, progress * 100)}%` }} /></div>
           </div>
 
-          <div className="rise" style={{ animationDelay: '200ms' }}><LaunchReportCard report={report} loading={rLoading} /></div>
 
           <div className="glass card rise" style={{ animationDelay: '260ms' }}>
             <div className="card-label">Holders</div>

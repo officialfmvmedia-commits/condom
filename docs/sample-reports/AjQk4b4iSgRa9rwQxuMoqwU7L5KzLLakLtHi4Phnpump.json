@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "mint": "AjQk4b4iSgRa9rwQxuMoqwU7L5KzLLakLtHi4Phnpump",
+  "generatedAt": "2026-10-26T10:03:48.440Z",
+  "network": "mainnet-beta",
+  "program": "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P",
+  "totalSupply": 999934810.242485,
+  "creation": {
+    "signature": "35StQC3p5upYoxk1cnFBK2adHo7RGodJJ4jV3kwbFuTAfDYZfXHZ9EreoP1Nm2k4eG3GNfWGMgm4mFY889KU2mrj",
+    "slot": 461617469,
+    "blockTime": 1793007820,
+    "creator": "2MkHLkJLArARPyh2CsynQUx88zS6HMXSgHXayVpG2E5x",
+    "jitoTip": false
+  },
+  "window": {
+    "fromSlot": 461617469,
+    "toSlot": 461617471,
+    "slotsAfterCreation": 2
+  },
+  "dev": {
+    "wallet": "2MkHLkJLArARPyh2CsynQUx88zS6HMXSgHXayVpG2E5x",
+    "buySol": 85.005359,
+    "buyTokens": 793100000,
+    "buyPctOfSupply": 79.3152
+  },
+  "earlyBuys": [
+    {
+      "signature": "35StQC3p5upYoxk1cnFBK2adHo7RGodJJ4jV3kwbFuTAfDYZfXHZ9EreoP1Nm2k4eG3GNfWGMgm4mFY889KU2mrj",
+      "slot": 461617469,
+      "slotOffset": 0,
+      "inCreateTx": true,
+      "block0": true,
+      "fundedByDev": false,
+      "fundingSignatures": [],
+      "jitoTip": false,
+      "venue": "curve",
+      "buyer": "2MkHLkJLArARPyh2CsynQUx88zS6HMXSgHXayVpG2E5x",
+      "sol": 85.005359,
+      "tokens": 793100000,
+      "pctOfSupply": 79.3152,
+      "isDev": true
+    },
+    {
+      "signature": "38qkG5cDLHBQB5n4KLsWcHFyYd4XhetvQt2fmSFWprdUb5zR8wdrtyRCZgfVjygNh6r1vxEca9Uq1H44XTNQT9DJ",
+      "slot": 461617469,
+      "slotOffset": 0,
+      "inCreateTx": false,
+      "block0": true,
+      "fundedByDev": false,
+      "fundingSignatures": [],
+      "jitoTip": false,
+      "venue": "amm",
+      "buyer": "7TaVFEGEfJDsD5qe67kVUtq6GMC9esDBSW3Xw2YnCSi2",
+      "sol": 2101.001351,
+      "tokens": 198763063.89,
+      "pctOfSupply": 19.8776,
+      "isDev": false
+    },
+    {
+      "signature": "5HrAZ2385mKXtYjDchnUJrsfLi2qGCcdqVwpkyY14D5gruf2zqroyMA6VpqrJj6DRFfM3mharfUnbt171JrFouSS",
+      "slot": 461617470,
+      "slotOffset": 1,
+      "inCreateTx": false,
+      "block0": false,
+      "fundedByDev": false,
+      "fundingSignatures": [],
+      "jitoTip": false,
+      "venue": "amm",
+      "buyer": "27HFmP7ccLadGswvQfvea4o3juLw75cPF4V6jWpHM3MX",
+      "sol": 0.001545,
+      "tokens": 0.07,
+      "pctOfSupply": 0,
+      "isDev": false
+    },
+    {
+      "signature": "RZWXEbnorP4oYcn6FcH2ehY6qNxTNfiL6EDBaCb9sGxsmrwXypnM4R22idTXkRFf2skBg6c8NMxTqAkrDxbUiqt",
+      "slot": 461617471,
+      "slotOffset": 2,
+      "inCreateTx": false,
+      "block0": false,
+      "fundedByDev": false,
+      "fundingSignatures": [],
+      "jitoTip": false,
+      "venue": "amm",
+      "buyer": "Fs9RN3wAsuJKPbTmtX5eek1bhW5krNH8RkQxkFAtgNfR",
+      "sol": 0.001549,
+      "tokens": 0.11,
+      "pctOfSupply": 0,
+      "isDev": false
+    },
+    {
+      "signature": "3ibqkGRWCRWJ8LF1LHdbCBnfgd7rjW19SzVRk5ns57PxL3xSZz5fSBMMJGVzGfVn9TA1GAuj1Z5LcJXqKU5VHeiH",
+      "slot": 461617471,
+      "slotOffset": 2,
+      "inCreateTx": false,
+      "block0": false,
+      "fundedByDev": false,
+      "fundingSignatures": [],
+      "jitoTip": false,
+      "venue": "amm",
+      "buyer": "E6dFzLK817YjNQ52c3o2ju7A7z9U1Lim2d7Zg3VHs5sp",
+      "sol": 0.180696,
+      "tokens": 670.9,
+      "pctOfSupply": 0.0001,
+      "isDev": false
+    }
+  ],
+  "summary": {
+    "block0Buyers": 1,
+    "block0OutsiderPctOfSupply": 19.8776,
+    "earlyBuyers": 4,
+    "earlyOutsiderPctOfSupply": 19.8777,
+    "devFundedWallets": 0,
+    "devFundedPctOfSupply": 0,
+    "createTxExtraBuyers": 0
+  },
+  "checks": [
+    {
+      "id": "dev-cap",
+      "label": "Dev buy",
+      "status": "fail",
+      "detail": "85.005 SOL · 79.32% of supply (cap 0.3 SOL)"
+    },
+    {
+      "id": "create-bundle",
+      "label": "Bundle check",
+      "status": "pass",
+      "detail": "Only the dev bought in the create tx"
+    },
+    {
+      "id": "dev-funded",
+      "label": "Dev-funded wallets",
+      "status": "pass",
+      "detail": "No early buyer was funded directly by the dev"
+    },
+    {
+      "id": "block0",
+      "label": "Block-0 buys",
+      "status": "warn",
+      "detail": "1 outsider wallet(s) · 19.88% · named"
+    },
+    {
+      "id": "jito-bundle",
+      "label": "Launch-slot tips",
+      "status": "pass",
+      "detail": "No tip-bundled buys alongside the create"
+    }
+  ],
+  "grade": "UNPROTECTED",
+  "notes": [
+    "Some buys had no pump.fun trade event (AMM or routed); they were read from token balance changes. For AMM/other buys, SOL is what the buyer spent including fees.",
+    "The coin graduated inside the report window; the migration to the AMM pool is not counted as a buy.",
+    "Funding trace is 1 hop (dev wallet → buyer). Multi-hop or exchange-routed funding is not detected.",
+    "SOL per buy is the amount that went into the bonding curve, before pump.fun fees.",
+    "10 failed transaction(s) touched the mint in the window (not counted)."
+  ]
+}

@@ -10,7 +10,10 @@
     "check:mocks": "node scripts/check-no-mocks.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "shots": "node scripts/screenshots.mjs"
+    "shots": "node scripts/screenshots.mjs",
+    "report": "tsx analyzer/src/cli.ts",
+    "report:serve": "tsx analyzer/src/server.ts",
+    "typecheck:analyzer": "tsc -p analyzer/tsconfig.json"
   },
   "dependencies": {
     "@solana/wallet-adapter-base": "^0.9.28",
